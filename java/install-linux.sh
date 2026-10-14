@@ -8,7 +8,6 @@ jar_path="${UVMS_JAR:-uvms-java.jar}"
 test -f "$jar_path"
 command -v java >/dev/null
 web_source=web
-[[ -d "$web_source" ]] || web_source=../web
 test -f "$web_source/index.html"
 getent passwd uvms >/dev/null || useradd --system --home /opt/uvms --shell /usr/sbin/nologin uvms
 install -d -m 755 /opt/uvms-java /opt/uvms-java/web /etc/uvms-java

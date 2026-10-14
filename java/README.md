@@ -1,5 +1,9 @@
 # UVMS Java 0.1.0
 
+이 폴더는 독립 배포 단위다. `java/` 폴더만 복사하거나 `uvms-java-standalone.zip`을 풀면 서버 소스, 실행 JAR(통합 ZIP), 웹 화면, 설정 예제, Linux 설치, 테스트·측정 도구, 분석 문서가 함께 있다. 상위 Rust 저장소나 실행 파일은 필요 없다.
+
+`web/`은 Java에서 검증한 H.264 영상용 화면이다. Rust 전용 음성·HLS·예약 녹화·NVIDIA 변환은 포함하지 않는다. `docs/`의 기존 측정값은 당시 결과이며, 패키지를 다시 묶었다고 성능을 재측정한 것은 아니다. 문서에 언급된 원본 바이너리·로컬 분석 증거와 과거 테스트 결과 파일은 배포하지 않는다.
+
 기존 Rust 서비스의 미디어 경로를 Java 21로 구현한 비교용 Linux 서비스다. 입력 RTSP 수신, H.264 RTP 조립, WebRTC 송신, 원본 형식의 WebSocket/fMP4, MP4 녹화, RTSP 재송출을 Java에서 처리한다. Rust 프로세스·JNI libwebrtc·FFmpeg를 실행하지 않는다. HTTP/WebSocket은 Netty, DTLS는 Bouncy Castle, SRTP 암호 연산은 JCA를 사용한다.
 
 원본 바이너리를 Java로 자동 변환한 결과가 아니다. 분석된 프로토콜과 현재 Rust의 기능 범위를 바탕으로 새로 작성한 구현이며, 전체 Unreal Media Server 기능을 복제하지는 않는다. 원본 SDK 파일은 테스트에만 사용하고 배포물에 넣지 않았다.
@@ -37,12 +41,30 @@ sudo systemctl enable --now uvms-java
 
 ```sh
 sudo apt-get install openjdk-21-jdk-headless maven
-cd java
+# 저장소에서는 java/, 압축을 풀었으면 uvms-java/ 폴더로 이동
+cd uvms-java
 mvn package
 sudo bash install-linux.sh
 ```
 
-개발 실행은 `UVMS_JAVA_CONFIG`로 설정 파일을 지정하고 `java -Djava.net.preferIPv4Stack=true -Xms64m -Xmx512m -jar target/uvms-java-0.1.0.jar`를 실행한다. JSON의 `web_root`를 저장소의 `web` 절대 경로로 지정한다.
+개발 실행은 `UVMS_JAVA_CONFIG`로 설정 파일을 지정하고 `java -Djava.net.preferIPv4Stack=true -Xms64m -Xmx512m -jar target/uvms-java-0.1.0.jar`를 실행한다. JSON의 `web_root`는 이 폴더 안의 `web` 절대 경로로 지정한다. 통합 ZIP에는 같은 JAR가 루트의 `uvms-java.jar`로 들어 있다. JDK/JRE와 Maven 의존성은 별도이며 최초 빌드에는 네트워크가 필요하다.
+
+## 한 폴더에서 패키징·검증
+
+```sh
+# 이 README가 있는 폴더에서 실행
+mvn package
+python3 scripts/package-java.py
+python3 scripts/verify-java-package.py
+```
+
+`dist/uvms-java-standalone.zip`은 소스와 실행 JAR를 합친 파일이다. 소스 전용 ZIP, Linux 실행용 tar.gz와 SHA-256 목록도 생성한다. 실제 설정·비밀번호·녹화·과거 테스트 결과는 포함하지 않는다. 기존 설치나 카메라 없이 패키징할 수 있다.
+
+브라우저 검증·성능 측정은 Node.js와 Playwright가 필요하다. `npm ci` 및 `npx playwright install chromium` 후 `UVMS_TEST_URL=http://127.0.0.1:8088 npm run test:browser`로 재생을 확인한다. Windows Edge 또는 `UVMS_BROWSER_PATH`로 지정한 브라우저도 사용할 수 있다. `UVMS_TEST_STREAM`으로 카메라 별칭, `UVMS_TEST_MODE=mse`로 MSE 검증을 선택한다.
+
+`scripts/benchmark-viewers.mjs`는 Linux systemd Java 서비스의 CPU·메모리와 브라우저 수신을 측정한다. Windows에서는 WSL(`UVMS_WSL_DISTRO`, 기본 Ubuntu-24.04) 서비스를 측정한다. 입력 해상도·서비스·주소는 `UVMS_BENCH_WIDTH`, `UVMS_BENCH_HEIGHT`, `UVMS_BENCH_SERVICE`, `UVMS_BENCH_URL`로 지정한다. `scripts/benchmark-relay.py`는 Java Probe로 RTSP 재송출을 측정한다. 과거 Rust 클라이언트와 다른 측정 도구이므로 기존 보고서 수치와 직접 비교하지 않는다.
+
+`java-optimization-fixture.py`와 `verify-java-optimized-recording.py`는 Linux root 및 별도로 준비한 `rtsp://127.0.0.1:8554/camera` 합성 입력이 필요한 시험 도구다. 후자는 녹화 확인용 `ffprobe`를 사용하며 서비스 자체 의존성은 아니다. `summarize-java-optimization.py`는 과거 전후 측정 파일이 있어야 실행되는 보고서 도구다. 일반 설치에서는 실행할 필요가 없다.
 
 ## 확인된 범위와 제한
 

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>UVMS · 실시간 영상</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='7' fill='%230c1113'/%3E%3Cpath d='M18 17v21a14 14 0 0 0 28 0V17' fill='none' stroke='%2373d7ad' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand"><i aria-hidden="true"></i><strong>UVMS</strong><span>MEDIA CONSOLE</span></div>
+      <div class="status" id="status" data-state="idle" role="status"><i aria-hidden="true"></i><span id="status-label">연결 대기</span></div>
+    </header>
+    <div class="workspace">
+      <section class="view-section" aria-label="실시간 영상">
+        <div class="view-toolbar">
+          <div class="view-heading"><span class="eyebrow">LIVE OPERATIONS</span><strong>실시간 영상</strong></div>
+          <div class="toolbar-center"><span>VIDEO <b>H.264</b></span><span id="wall-summary">SINGLE VIEW</span></div><div class="layout-switch" role="group" aria-label="화면 분할"><button type="button" data-layout="1" aria-pressed="true">1</button><button type="button" data-layout="4" aria-pressed="false">4</button><button type="button" data-layout="9" aria-pressed="false">9</button><button type="button" data-layout="16" aria-pressed="false">16</button></div>
+        </div>
+        <div id="single-stage" class="stage">
+          <div class="video-frame">
+            <video id="video" autoplay muted playsinline controls aria-label="카메라 실시간 영상"></video>
+            <div id="empty" class="empty-state"><span>LIVE VIEW</span><strong id="empty-title">카메라 연결 중</strong><p id="empty-message">등록된 카메라를 불러오고 있습니다.</p></div>
+            <div class="video-caption"><span id="current-stream">NO STREAM</span><span id="transport-caption">WEBRTC</span></div>
+          </div>
+          <div class="stage-note"><span id="transport-path">RTSP → WEBRTC</span><p>H.264 영상 전용 · 음성은 제공하지 않습니다.</p></div>
+        </div>
+        <div id="wall-stage" hidden><div id="camera-wall" class="camera-wall" data-layout="4"></div><p id="wall-hint" class="form-hint">카메라를 선택한 뒤 연결을 누르세요. 각 화면은 독립적으로 재연결됩니다.</p></div>
+      </section>
+      <aside class="side-panel" aria-label="카메라 연결 설정">
+        <div class="panel-header"><span>CONNECTION</span><h1>카메라 연결</h1><p>이 서버에 등록된 카메라를 재생합니다.</p></div>
+        <div id="error" class="error-message" role="alert" hidden></div>
+        <form id="connection-form" autocomplete="off">
+          <button id="load-streams" type="button">카메라 목록 새로고침</button>
+          <fieldset id="camera-selection" hidden><legend>동시에 볼 카메라</legend><div id="camera-choices"></div><p id="selection-count" class="form-hint">목록을 먼저 불러오세요.</p></fieldset><label class="field-row" for="stream"><span>카메라</span><select id="stream" class="field" disabled><option value="">목록을 먼저 불러오세요</option></select></label>
+          <p class="form-hint" id="stream-hint">등록된 카메라의 이름이 표시됩니다.</p>
+          <label class="field-row" for="mode"><span>재생 방식</span><select id="mode" class="field" aria-describedby="mode-hint"><option value="webrtc">WebRTC</option><option value="mse">WebSocket (MSE)</option></select></label>
+          <p class="form-hint" id="mode-hint">WebRTC는 낮은 지연, WebSocket은 TCP 연결을 사용합니다.</p>
+          <div class="action-bar"><button id="connect" class="primary" type="submit" disabled>연결</button><button id="disconnect" type="button" disabled>연결 해제</button></div>
+          <button id="reconnect" class="reconnect" type="button" disabled>다시 연결</button>
+        </form>
+        <section class="session-info" aria-label="수신 상태">
+          <div class="section-head"><span>RECEIVE STATUS</span><small id="freshness">대기</small></div>
+          <div class="metric-grid">
+            <div><span>수신 프레임</span><strong><span id="frames">—</span><small>frames</small></strong></div>
+            <div><span>수신 데이터</span><strong><span id="bytes">—</span><small>MB</small></strong></div>
+            <div><span>프레임 속도</span><strong><span id="fps">—</span><small>fps</small></strong></div>
+            <div><span>해상도</span><strong id="resolution">—</strong></div>
+          </div>
+          <p class="form-hint">연결 후 실제로 수신한 영상의 상태입니다.</p>
+        </section>
+        <section class="session-info" aria-label="녹화 파일">
+          <div class="section-head"><span>MP4 RECORDINGS</span><small id="recording-summary">—</small></div>
+          <button id="refresh-recordings" type="button">녹화 파일 새로고침</button>
+          <p id="recordings" class="form-hint">설정에서 녹화를 켠 카메라는 자동으로 분할 저장합니다.</p>
+        </section>
+        <p class="panel-footer">LINUX MEDIA SERVICE<span>브라우저의 카메라 권한은 필요하지 않습니다.</span></p>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

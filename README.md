@@ -8,6 +8,8 @@ UMediaServer v15 MSI의 네이티브 분석·공식 SDK 프로토콜·원본 DLL
 
 Java 21 구현은 [java/README.md](java/README.md), 같은 카메라를 사용한 Rust/Java 비교는 [docs/java-comparison.md](docs/java-comparison.md)에 있다. Java 서비스는 별도 포트8088에서 실행한다.
 
+`java/`는 웹 화면·설치·문서·검증 도구까지 포함한 독립 프로젝트다. 해당 폴더에서 `mvn package` 후 `python3 scripts/package-java.py`를 실행하면 소스와 실행 JAR를 함께 담은 `dist/uvms-java-standalone.zip`이 만들어진다.
+
 Rust 공유 UDP·버퍼 개선과 동일 입력 전후 측정은 [docs/rust-optimization.md](docs/rust-optimization.md), v0.3.0의 음성·HLS·관제 기능과 검증 범위는 [docs/rust-surveillance.md](docs/rust-surveillance.md)에 있다. Java는 이번 변경 대상이 아니다.
 
 ## 제공 기능

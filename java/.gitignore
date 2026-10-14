@@ -1,0 +1,12 @@
+/target/
+/dist/
+/node_modules/
+/test-results/
+/recordings/
+/config.json
+/uvms-java.jar
+.env
+uvms.env
+*.log
+*.pid
+__pycache__/

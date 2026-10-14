@@ -1,0 +1,10 @@
+{
+  "name": "uvms-java-browser-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:browser": "node scripts/browser-smoke.mjs",
+    "benchmark": "node scripts/benchmark-viewers.mjs"
+  },
+  "devDependencies": { "playwright": "1.58.2" }
+}
