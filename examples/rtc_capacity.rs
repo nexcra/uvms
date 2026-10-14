@@ -48,7 +48,7 @@ struct Viewer {
     peer: Arc<RTCPeerConnection>,
     counts: Arc<Counters>,
 }
-async fn connect() -> Result<Viewer> {
+async fn connect(go2rtc: bool) -> Result<Viewer> {
     let mut media = MediaEngine::default();
     media.register_default_codecs()?;
     let registry = register_default_interceptors(Registry::new(), &mut media)?;
@@ -102,30 +102,72 @@ async fn connect() -> Result<Viewer> {
     )
     .await?;
     let negotiate = async {
-        let (mut ws, _) =
-            connect_async("ws://127.0.0.1:8091/webrtc_playnow/singleport/udp/camera").await?;
-        let greeting = ws.next().await.context("missing greeting")??.into_text()?;
-        if !greeting.starts_with("H264|-|-|") {
-            bail!("unexpected codec greeting");
+        let endpoint = if go2rtc {
+            "ws://127.0.0.1:8097/api/ws?src=camera"
+        } else {
+            "ws://127.0.0.1:8091/webrtc_playnow/singleport/udp/camera"
+        };
+        let (mut ws, _) = connect_async(endpoint).await?;
+        if !go2rtc {
+            let greeting = ws.next().await.context("missing greeting")??.into_text()?;
+            if !greeting.starts_with("H264|-|-|") {
+                bail!("unexpected codec greeting");
+            }
         }
         let offer = peer.create_offer(None).await?;
         let mut gathering = peer.gathering_complete_promise().await;
         peer.set_local_description(offer).await?;
         gathering.recv().await;
-        ws.send(Message::Text(
-            serde_json::to_string(&peer.local_description().await.context("missing offer")?)?
-                .into(),
-        ))
-        .await?;
-        let answer = ws.next().await.context("missing answer")??.into_text()?;
-        let mut parts = answer.split("|-|-|");
-        peer.set_remote_description(serde_json::from_str::<RTCSessionDescription>(
-            parts.next().context("missing answer SDP")?,
-        )?)
-        .await?;
-        if let Some(candidate) = parts.next() {
-            peer.add_ice_candidate(serde_json::from_str::<RTCIceCandidateInit>(candidate)?)
-                .await?;
+        let local = peer.local_description().await.context("missing offer")?;
+        let request = if go2rtc {
+            json!({"type":"webrtc/offer","value":local.sdp})
+        } else {
+            serde_json::to_value(local)?
+        };
+        ws.send(Message::Text(request.to_string().into())).await?;
+        if go2rtc {
+            while counts.frames.load(Relaxed) < 10 {
+                let Ok(message) = tokio::time::timeout(Duration::from_millis(100), ws.next()).await
+                else {
+                    continue;
+                };
+                let message = message.context("go2rtc signaling closed")??;
+                if !message.is_text() {
+                    continue;
+                }
+                let message: Value = serde_json::from_str(message.to_text()?)?;
+                match message["type"].as_str() {
+                    Some("webrtc/answer") => {
+                        peer.set_remote_description(RTCSessionDescription::answer(
+                            message["value"].as_str().context("missing SDP")?.into(),
+                        )?)
+                        .await?
+                    }
+                    Some("webrtc/candidate") => {
+                        let candidate = message["value"].as_str().context("missing candidate")?;
+                        if !candidate.is_empty() {
+                            peer.add_ice_candidate(RTCIceCandidateInit {
+                                candidate: candidate.into(),
+                                sdp_mid: Some("0".into()),
+                                ..Default::default()
+                            })
+                            .await?;
+                        }
+                    }
+                    _ => bail!("go2rtc signaling error: {}", message["type"]),
+                }
+            }
+        } else {
+            let answer = ws.next().await.context("missing answer")??.into_text()?;
+            let mut parts = answer.split("|-|-|");
+            peer.set_remote_description(serde_json::from_str::<RTCSessionDescription>(
+                parts.next().context("missing answer SDP")?,
+            )?)
+            .await?;
+            if let Some(candidate) = parts.next() {
+                peer.add_ice_candidate(serde_json::from_str::<RTCIceCandidateInit>(candidate)?)
+                    .await?;
+            }
         }
         let _ = ws.close(None).await;
         while counts.frames.load(Relaxed) < 10 {
@@ -169,6 +211,11 @@ fn process(pid: u32) -> Result<(u64, f64)> {
 }
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() -> Result<()> {
+    let engine = std::env::var("UVMS_CAP_ENGINE").unwrap_or("rust".into());
+    if !matches!(engine.as_str(), "rust" | "go2rtc") {
+        bail!("unknown fixture engine");
+    }
+    let go2rtc = engine == "go2rtc";
     let counts = std::env::var("UVMS_CAP_COUNTS")
         .unwrap_or("32,64,128,256".into())
         .split(',')
@@ -192,7 +239,17 @@ async fn main() -> Result<()> {
         std::env::var("UVMS_CAP_OUTPUT").unwrap_or("test-results/capacity/transport.json".into());
     let pid = String::from_utf8(
         std::process::Command::new("systemctl")
-            .args(["show", "uvms-rust-opt-bench", "-p", "MainPID", "--value"])
+            .args([
+                "show",
+                if go2rtc {
+                    "uvms-go2rtc-bench"
+                } else {
+                    "uvms-rust-opt-bench"
+                },
+                "-p",
+                "MainPID",
+                "--value",
+            ])
             .output()?
             .stdout,
     )?
@@ -211,7 +268,9 @@ async fn main() -> Result<()> {
     for target in counts {
         while viewers.len() < target {
             let n = (target - viewers.len()).min(ramp);
-            let tasks = (0..n).map(|_| tokio::spawn(connect())).collect::<Vec<_>>();
+            let tasks = (0..n)
+                .map(|_| tokio::spawn(connect(go2rtc)))
+                .collect::<Vec<_>>();
             for task in tasks {
                 viewers.push(task.await??);
             }
@@ -275,7 +334,7 @@ async fn main() -> Result<()> {
         std::fs::write(
             &output,
             serde_json::to_vec_pretty(
-                &json!({"scope":"Local WSL ICE/DTLS/SRTP receive, packet-contiguous marker frames; no decoder, browser or physical NIC validation","stages":stages}),
+                &json!({"engine":engine,"scope":"Local WSL ICE/DTLS/SRTP receive, packet-contiguous marker frames; no decoder, browser or physical NIC validation","stages":stages}),
             )?,
         )?;
         if !passed {

@@ -10,6 +10,7 @@ runtime += [str(p.relative_to(root)) for p in (root/"web").rglob("*") if p.is_fi
 runtime += ["docs/native-service-verification.md","docs/rtsp-relay.md"]
 runtime.append("docs/performance.md")
 runtime.append("docs/capacity-2026-10-14.md")
+runtime += ["docs/go2rtc-comparison-2026-10-15.md", "docs/go2rtc-comparison-2026-10-15.json"]
 runtime += ["docs/rust-optimization.md", "docs/feature-gap-2026-10-14.md", "docs/original-buffer-optimizations.md", "docs/original-shared-udp.md"]
 runtime += ["docs/rust-surveillance.md", "docs/surveillance-archive.md"]
 runtime += ["docs/nvidia-transcoding.md"]
@@ -35,6 +36,8 @@ source.append(root/"scripts/browser-hls-idle.mjs")
 source.append(root/"scripts/hls-audio-skew-fixture.py")
 source.append(root/"scripts/browser-rtc-sharing.mjs")
 source.append(root/"scripts/benchmark-capacity.mjs")
+source += [root/"scripts"/n for n in ["go2rtc-benchmark-fixture.py", "compare-go2rtc.ps1", "summarize-go2rtc.py"]]
+source.append(root/"docs/go2rtc-comparison-2026-10-15.json")
 # Synthetic AVCC fixtures are required by the RTSP crate's compile-time tests.
 source += list((root/"ports/unreal-rtsp/tests/fixtures").glob("*.avcc"))
 source += [p for p in (root/"licenses").iterdir() if p.is_file()]

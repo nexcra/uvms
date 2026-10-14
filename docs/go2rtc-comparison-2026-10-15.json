@@ -1,0 +1,484 @@
+{
+  "rows": [
+    {
+      "mode": "browser",
+      "run": "1-rust",
+      "engine": "rust",
+      "connections": 32,
+      "passed": true,
+      "cpu": 21.623219411932677,
+      "rss_mib": 78.96484375,
+      "fps": 14.531131994440434,
+      "min_fps": 14.531065556054331,
+      "mbps": 39.73762814222597,
+      "lost": 0,
+      "freezes": 0,
+      "client_cpu": 111.62292608795595,
+      "input_connections": 1,
+      "protocols": [
+        "udp"
+      ]
+    },
+    {
+      "mode": "browser",
+      "run": "1-rust",
+      "engine": "rust",
+      "connections": 64,
+      "passed": true,
+      "cpu": 49.078723814207116,
+      "rss_mib": 122.8046875,
+      "fps": 14.536273726167257,
+      "min_fps": 14.504514820659777,
+      "mbps": 79.62390921453296,
+      "lost": 0,
+      "freezes": 0,
+      "client_cpu": 251.24364318946093,
+      "input_connections": 1,
+      "protocols": [
+        "udp"
+      ]
+    },
+    {
+      "mode": "browser",
+      "run": "2-go2rtc",
+      "engine": "go2rtc",
+      "connections": 32,
+      "passed": true,
+      "cpu": 49.934295842866256,
+      "rss_mib": 199.70703125,
+      "fps": 14.46002761267947,
+      "min_fps": 14.445444371755643,
+      "mbps": 39.51960401926373,
+      "lost": 0,
+      "freezes": 0,
+      "client_cpu": 131.626631701164,
+      "input_connections": 1,
+      "protocols": [
+        "udp"
+      ]
+    },
+    {
+      "mode": "browser",
+      "run": "2-go2rtc",
+      "engine": "go2rtc",
+      "connections": 64,
+      "passed": true,
+      "cpu": 110.93759938693529,
+      "rss_mib": 382.43359375,
+      "fps": 14.468113456702984,
+      "min_fps": 14.37898979737077,
+      "mbps": 79.40027514839015,
+      "lost": 0,
+      "freezes": 5,
+      "client_cpu": 304.6814745457033,
+      "input_connections": 1,
+      "protocols": [
+        "udp"
+      ]
+    },
+    {
+      "mode": "browser",
+      "run": "3-go2rtc",
+      "engine": "go2rtc",
+      "connections": 32,
+      "passed": true,
+      "cpu": 46.36151714622807,
+      "rss_mib": 200.5546875,
+      "fps": 14.526669770973058,
+      "min_fps": 14.512221648448541,
+      "mbps": 39.66300008257724,
+      "lost": 0,
+      "freezes": 0,
+      "client_cpu": 142.90037033858147,
+      "input_connections": 1,
+      "protocols": [
+        "udp"
+      ]
+    },
+    {
+      "mode": "browser",
+      "run": "3-go2rtc",
+      "engine": "go2rtc",
+      "connections": 64,
+      "passed": true,
+      "cpu": 114.5572108547271,
+      "rss_mib": 377.75390625,
+      "fps": 14.511101891610853,
+      "min_fps": 14.500592682954542,
+      "mbps": 79.48765059626258,
+      "lost": 0,
+      "freezes": 25,
+      "client_cpu": 326.31989999460905,
+      "input_connections": 1,
+      "protocols": [
+        "udp"
+      ]
+    },
+    {
+      "mode": "browser",
+      "run": "4-rust",
+      "engine": "rust",
+      "connections": 32,
+      "passed": true,
+      "cpu": 27.085755827026748,
+      "rss_mib": 79.46484375,
+      "fps": 14.51562383779778,
+      "min_fps": 14.515330780141978,
+      "mbps": 39.70768046837775,
+      "lost": 0,
+      "freezes": 0,
+      "client_cpu": 131.01382177091597,
+      "input_connections": 1,
+      "protocols": [
+        "udp"
+      ]
+    },
+    {
+      "mode": "browser",
+      "run": "4-rust",
+      "engine": "rust",
+      "connections": 64,
+      "passed": true,
+      "cpu": 54.64560032141366,
+      "rss_mib": 122.3125,
+      "fps": 14.510156826483625,
+      "min_fps": 14.509922007101451,
+      "mbps": 79.59140315575411,
+      "lost": 0,
+      "freezes": 0,
+      "client_cpu": 276.7567459685378,
+      "input_connections": 1,
+      "protocols": [
+        "udp"
+      ]
+    },
+    {
+      "mode": "transport",
+      "run": "1-rust",
+      "engine": "rust",
+      "connections": 128,
+      "passed": true,
+      "cpu": 66.61309107135938,
+      "rss_mib": 197.96875,
+      "fps": 15.013745164009535,
+      "min_fps": 15.013745164009535,
+      "mbps": 164.18937753945397,
+      "sequence_discontinuities": 0,
+      "client_cpu": 43.39338541305195
+    },
+    {
+      "mode": "transport",
+      "run": "1-rust",
+      "engine": "rust",
+      "connections": 512,
+      "passed": true,
+      "cpu": 487.6174905247008,
+      "rss_mib": 686.02734375,
+      "fps": 15.002491321230089,
+      "min_fps": 14.9862338223885,
+      "mbps": 656.0986210449469,
+      "sequence_discontinuities": 0,
+      "client_cpu": 273.2080143850959
+    },
+    {
+      "mode": "transport",
+      "run": "2-go2rtc",
+      "engine": "go2rtc",
+      "connections": 128,
+      "passed": false,
+      "cpu": 191.8916671232399,
+      "rss_mib": 710.0,
+      "fps": 8.294926963097138,
+      "min_fps": 7.30302920391004,
+      "mbps": 91.04394507122825,
+      "sequence_discontinuities": 64,
+      "client_cpu": 135.77978214650057
+    },
+    {
+      "mode": "transport",
+      "run": "3-go2rtc",
+      "engine": "go2rtc",
+      "connections": 128,
+      "passed": false,
+      "cpu": 192.8477056710291,
+      "rss_mib": 706.359375,
+      "fps": 10.546358903884405,
+      "min_fps": 9.819638072487027,
+      "mbps": 115.29335257287737,
+      "sequence_discontinuities": 37,
+      "client_cpu": 133.53043433146343
+    },
+    {
+      "mode": "transport",
+      "run": "4-rust",
+      "engine": "rust",
+      "connections": 128,
+      "passed": true,
+      "cpu": 62.05908545569336,
+      "rss_mib": 198.07421875,
+      "fps": 15.011342204621993,
+      "min_fps": 15.011342204621993,
+      "mbps": 164.1217728007359,
+      "sequence_discontinuities": 0,
+      "client_cpu": 40.55725161049202
+    },
+    {
+      "mode": "transport",
+      "run": "4-rust",
+      "engine": "rust",
+      "connections": 512,
+      "passed": true,
+      "cpu": 436.9101407858948,
+      "rss_mib": 684.265625,
+      "fps": 15.005662777449512,
+      "min_fps": 14.98500330597987,
+      "mbps": 656.4831556252611,
+      "sequence_discontinuities": 0,
+      "client_cpu": 252.88232549103654
+    }
+  ],
+  "groups": [
+    {
+      "mode": "browser",
+      "engine": "go2rtc",
+      "connections": 32,
+      "runs": 2,
+      "measured_runs": 2,
+      "all_passed": true,
+      "cpu": 48.14790649454716,
+      "rss_mib": 200.130859375,
+      "fps": 14.493348691826263,
+      "mbps": 39.59130205092049,
+      "client_cpu": 137.26350101987273,
+      "cpu_min": 46.36151714622807,
+      "cpu_max": 49.934295842866256,
+      "min_fps": 14.445444371755643
+    },
+    {
+      "mode": "browser",
+      "engine": "go2rtc",
+      "connections": 64,
+      "runs": 2,
+      "measured_runs": 2,
+      "all_passed": true,
+      "cpu": 112.74740512083119,
+      "rss_mib": 380.09375,
+      "fps": 14.489607674156918,
+      "mbps": 79.44396287232637,
+      "client_cpu": 315.50068727015616,
+      "cpu_min": 110.93759938693529,
+      "cpu_max": 114.5572108547271,
+      "min_fps": 14.37898979737077
+    },
+    {
+      "mode": "browser",
+      "engine": "rust",
+      "connections": 32,
+      "runs": 2,
+      "measured_runs": 2,
+      "all_passed": true,
+      "cpu": 24.354487619479713,
+      "rss_mib": 79.21484375,
+      "fps": 14.523377916119106,
+      "mbps": 39.72265430530186,
+      "client_cpu": 121.31837392943595,
+      "cpu_min": 21.623219411932677,
+      "cpu_max": 27.085755827026748,
+      "min_fps": 14.515330780141978
+    },
+    {
+      "mode": "browser",
+      "engine": "rust",
+      "connections": 64,
+      "runs": 2,
+      "measured_runs": 2,
+      "all_passed": true,
+      "cpu": 51.86216206781039,
+      "rss_mib": 122.55859375,
+      "fps": 14.523215276325441,
+      "mbps": 79.60765618514353,
+      "client_cpu": 264.00019457899936,
+      "cpu_min": 49.078723814207116,
+      "cpu_max": 54.64560032141366,
+      "min_fps": 14.504514820659777
+    },
+    {
+      "mode": "transport",
+      "engine": "go2rtc",
+      "connections": 128,
+      "runs": 2,
+      "measured_runs": 2,
+      "all_passed": false,
+      "cpu": 192.3696863971345,
+      "rss_mib": 708.1796875,
+      "fps": 9.420642933490772,
+      "mbps": 103.1686488220528,
+      "client_cpu": 134.655108238982,
+      "cpu_min": 191.8916671232399,
+      "cpu_max": 192.8477056710291,
+      "min_fps": 7.30302920391004
+    },
+    {
+      "mode": "transport",
+      "engine": "rust",
+      "connections": 128,
+      "runs": 2,
+      "measured_runs": 2,
+      "all_passed": true,
+      "cpu": 64.33608826352636,
+      "rss_mib": 198.021484375,
+      "fps": 15.012543684315764,
+      "mbps": 164.15557517009495,
+      "client_cpu": 41.97531851177199,
+      "cpu_min": 62.05908545569336,
+      "cpu_max": 66.61309107135938,
+      "min_fps": 15.011342204621993
+    },
+    {
+      "mode": "transport",
+      "engine": "rust",
+      "connections": 512,
+      "runs": 2,
+      "measured_runs": 2,
+      "all_passed": true,
+      "cpu": 462.2638156552978,
+      "rss_mib": 685.146484375,
+      "fps": 15.0040770493398,
+      "mbps": 656.290888335104,
+      "client_cpu": 263.04516993806624,
+      "cpu_min": 436.9101407858948,
+      "cpu_max": 487.6174905247008,
+      "min_fps": 14.98500330597987
+    }
+  ],
+  "runs": [
+    {
+      "mode": "browser",
+      "run": "1-rust",
+      "finished": true,
+      "unmeasured_connections": [],
+      "start": {
+        "startedAt": "2026-10-15T00:13:28.7337152+09:00",
+        "hostCpuPercent": 40
+      },
+      "end": {
+        "finishedAt": "2026-10-15T00:16:22.9247962+09:00",
+        "exitCode": 0,
+        "hostCpuPercent": 58
+      }
+    },
+    {
+      "mode": "browser",
+      "run": "2-go2rtc",
+      "finished": true,
+      "unmeasured_connections": [],
+      "start": {
+        "startedAt": "2026-10-15T00:16:25.3942426+09:00",
+        "hostCpuPercent": 84
+      },
+      "end": {
+        "finishedAt": "2026-10-15T00:19:06.4165310+09:00",
+        "exitCode": 0,
+        "hostCpuPercent": 56
+      }
+    },
+    {
+      "mode": "browser",
+      "run": "3-go2rtc",
+      "finished": true,
+      "unmeasured_connections": [],
+      "start": {
+        "startedAt": "2026-10-15T00:19:07.7435448+09:00",
+        "hostCpuPercent": 48
+      },
+      "end": {
+        "finishedAt": "2026-10-15T00:21:48.4646909+09:00",
+        "exitCode": 0,
+        "hostCpuPercent": 81
+      }
+    },
+    {
+      "mode": "browser",
+      "run": "4-rust",
+      "finished": true,
+      "unmeasured_connections": [],
+      "start": {
+        "startedAt": "2026-10-15T00:21:50.4137282+09:00",
+        "hostCpuPercent": 56
+      },
+      "end": {
+        "finishedAt": "2026-10-15T00:24:38.5354787+09:00",
+        "exitCode": 0,
+        "hostCpuPercent": 55
+      }
+    },
+    {
+      "mode": "transport",
+      "run": "1-rust",
+      "finished": true,
+      "unmeasured_connections": [],
+      "start": {
+        "startedAt": "2026-10-15T00:25:31.9488715+09:00",
+        "hostCpuPercent": 29
+      },
+      "end": {
+        "finishedAt": "2026-10-15T00:28:44.1243901+09:00",
+        "exitCode": 0,
+        "hostCpuPercent": 90
+      }
+    },
+    {
+      "mode": "transport",
+      "run": "2-go2rtc",
+      "finished": true,
+      "unmeasured_connections": [
+        512
+      ],
+      "start": {
+        "startedAt": "2026-10-15T00:28:47.6489424+09:00",
+        "hostCpuPercent": 87
+      },
+      "end": {
+        "finishedAt": "2026-10-15T00:30:10.4774216+09:00",
+        "exitCode": 1,
+        "hostCpuPercent": 78
+      },
+      "reason": "Stopped after quality failure"
+    },
+    {
+      "mode": "transport",
+      "run": "3-go2rtc",
+      "finished": true,
+      "unmeasured_connections": [
+        512
+      ],
+      "start": {
+        "startedAt": "2026-10-15T00:30:20.8768398+09:00",
+        "hostCpuPercent": 84
+      },
+      "end": {
+        "finishedAt": "2026-10-15T00:31:42.4559656+09:00",
+        "exitCode": 1,
+        "hostCpuPercent": 100
+      },
+      "reason": "Stopped after quality failure"
+    },
+    {
+      "mode": "transport",
+      "run": "4-rust",
+      "finished": true,
+      "unmeasured_connections": [],
+      "start": {
+        "startedAt": "2026-10-15T00:31:44.8329242+09:00",
+        "hostCpuPercent": 77
+      },
+      "end": {
+        "finishedAt": "2026-10-15T00:34:55.6359603+09:00",
+        "exitCode": 0,
+        "hostCpuPercent": 82
+      }
+    }
+  ],
+  "all_runs_finished": true,
+  "all_requested_stages_measured": false
+}

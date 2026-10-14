@@ -1,10 +1,13 @@
 // Real browser H264 decoding on independent peers, grouped to avoid tab overhead.
-// Only the isolated Rust fixture is permitted. This measures local fan-out, not NIC capacity.
+// Only isolated Rust/go2rtc fixtures are permitted. Local fan-out, not NIC capacity.
 import { chromium } from "playwright";
 import { spawn } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 
-const base = "http://127.0.0.1:8091", service = "uvms-rust-opt-bench";
+const engine=process.env.UVMS_CAP_ENGINE||"rust";
+if(!["rust","go2rtc"].includes(engine))throw Error("Unknown fixture engine");
+const base = engine==="rust"?"http://127.0.0.1:8091":"http://127.0.0.1:8097", service = engine==="rust"?"uvms-rust-opt-bench":"uvms-go2rtc-bench";
+const warmHls=engine==="rust"&&process.env.UVMS_CAP_HLS!=="0";
 const counts = (process.env.UVMS_CAP_COUNTS || "32,64,128,256").split(",").map(Number);
 const seconds = Number(process.env.UVMS_CAP_SECONDS || 60);
 const groupSize = Number(process.env.UVMS_CAP_GROUP || 8);
@@ -13,11 +16,14 @@ const softwareDecode = process.env.UVMS_CAP_SOFTWARE_DECODE === "1";
 const peersPerBrowser=Number(process.env.UVMS_CAP_BROWSER_PEERS||1024);
 if(!Number.isInteger(peersPerBrowser)||peersPerBrowser<groupSize||peersPerBrowser%groupSize)throw Error("Browser peer limit must be a multiple of group size");
 if (counts.some((n,i)=>!Number.isInteger(n)||n<1||n>1024||(i&&n<=counts[i-1])) || seconds<10||seconds>300 || !Number.isInteger(groupSize)||groupSize<1||groupSize>16) throw Error("Invalid bounded parameters");
-const health = await (await fetch(base+"/healthz")).json();
-if (health.media_engine!=="rust-native") throw Error("Expected Rust fixture");
+const health = await (await fetch(base+(engine==="rust"?"/healthz":"/api"))).json();
+if (engine==="rust"?health.media_engine!=="rust-native":health.version!=="1.9.14") throw Error("Unexpected fixture version/engine");
 await mkdir(output,{recursive:true});
 const result={health,base,service,counts,seconds,groupSize,scope:"Synthetic H264 640x360 nominal 15fps, independent WebRTC peers with video decoding, one source, HLS cache warm, Windows browser and WSL server share hardware",thresholds:{minFps:13,maxLossRatio:0.001,maxMeanJitterBufferSeconds:0.25},stages:[],startedAt:new Date().toISOString()};
 const samples=[],errors=[];
+result.engine=engine;result.warmHls=warmHls;
+result.scope=`Synthetic H264 640x360 nominal 15fps, independent WebRTC peers with video decoding, one source, HLS warm=${warmHls}, Windows browser and WSL server share hardware`;
+const keepHls=async()=>{if(warmHls)await fetch(base+"/hls/camera/index.m3u8");};
 const sampler=spawn("wsl",["-d","Ubuntu-24.04","-u","root","--exec","env","UVMS_BENCH_SERVICE="+service,"UVMS_BENCH_SOURCE_PORT=8554","python3","-u","/mnt/d/workspaces/uvms/scripts/sample-service.py"],{stdio:["ignore","pipe","pipe"]});
 let pending="";
 sampler.stdout.on("data",data=>{pending+=data;let end;while((end=pending.indexOf("\n"))>=0){const line=pending.slice(0,end);pending=pending.slice(end+1);try{samples.push(JSON.parse(line));}catch{}}});
@@ -43,9 +49,9 @@ async function newPage(){
   const network=await page.context().newCDPSession(page);
   await network.send("Network.enable");
   network.on("Network.webSocketHandshakeResponseReceived",({response})=>{if(response.status!==101)errors.push(`WebSocket HTTP ${response.status}`);});
-  await page.goto(base);
+  await page.goto(base+(engine==="go2rtc"?"/api":"/"));
   await page.setContent("<!doctype html><title>UVMS capacity test</title><body></body>");
-  await page.evaluate(()=>{
+  await page.evaluate(engine=>{
     window.peers=[];
     window.addPeer=()=>new Promise((resolve,reject)=>{
       const pc=new RTCPeerConnection(), video=document.createElement("video");
@@ -58,23 +64,31 @@ async function newPage(){
       const tracks=new MediaStream();
       pc.ontrack=event=>{tracks.addTrack(event.track);video.srcObject=tracks;video.play().catch(fail);};
       pc.onconnectionstatechange=()=>{if(pc.connectionState==="failed")fail(Error("ICE connection failed"));};
-      const ws=new WebSocket(location.origin.replace("http:","ws:")+"/webrtc_playnow/singleport/udp/camera");entry.ws=ws;
+      const ws=new WebSocket(location.origin.replace("http:","ws:")+(engine==="go2rtc"?"/api/ws?src=camera":"/webrtc_playnow/singleport/udp/camera"));entry.ws=ws;
       let answered=false;
-      ws.onmessage=async event=>{try{
-        if(event.data.startsWith("H264|-|-|")){
+      const sendOffer=async()=>{
           pc.getTransceivers()[0].setCodecPreferences(RTCRtpReceiver.getCapabilities("video").codecs.filter(c=>c.mimeType.toLowerCase()==="video/h264"));
           const offer=await pc.createOffer();offer.sdp=offer.sdp.replaceAll("a=extmap-allow-mixed\r\n","");await pc.setLocalDescription(offer);
           if(pc.iceGatheringState!=="complete")await new Promise((done,no)=>{const t=setTimeout(()=>no(Error("ICE gather timeout")),8000);pc.addEventListener("icegatheringstatechange",()=>{if(pc.iceGatheringState==="complete"){clearTimeout(t);done();}});});
-          ws.send(JSON.stringify({type:"offer",sdp:pc.localDescription.sdp}));
+          ws.send(JSON.stringify(engine==="go2rtc"?{type:"webrtc/offer",value:pc.localDescription.sdp}:{type:"offer",sdp:pc.localDescription.sdp}));
+      };
+      if(engine==="go2rtc")ws.onopen=()=>sendOffer().catch(fail);
+      ws.onmessage=async event=>{try{
+        if(engine==="rust"&&event.data.startsWith("H264|-|-|")){await sendOffer();return;}
+        if(engine==="go2rtc"){
+          const msg=JSON.parse(event.data);
+          if(msg.type==="webrtc/candidate"){if(msg.value)await pc.addIceCandidate({candidate:msg.value,sdpMid:"0"});return;}
+          if(msg.type!=="webrtc/answer")throw Error(msg.value||"Invalid go2rtc answer");
+          answered=true;await pc.setRemoteDescription({type:"answer",sdp:msg.value});
         }else{
           const parts=event.data.split("|-|-|"),answer=JSON.parse(parts[0]);
           if(answer.type!=="answer")throw Error(answer.message||"Invalid answer");
-          answered=true;await pc.setRemoteDescription(answer);if(parts[1])await pc.addIceCandidate(JSON.parse(parts[1]));ws.close();
+          answered=true;await pc.setRemoteDescription(answer);if(parts[1])await pc.addIceCandidate(JSON.parse(parts[1]));
+        }
           const check=async()=>{try{const stats=[...(await pc.getStats()).values()];const v=stats.find(s=>s.type==="inbound-rtp"&&s.kind==="video");
-            if(v?.framesDecoded>=10){entry.ready=true;entry.startupMs=performance.now()-entry.started;clearTimeout(timer);resolve();}
+            if(v?.framesDecoded>=10){entry.ready=true;entry.startupMs=performance.now()-entry.started;clearTimeout(timer);ws.close();resolve();}
             else if(performance.now()-entry.started<45000)setTimeout(check,100);
           }catch(error){fail(error);}};check();
-        }
       }catch(error){fail(error);}};
       ws.onerror=()=>{if(!answered)fail(Error("Signaling WebSocket error"));};
       ws.onclose=()=>{if(!answered)fail(Error("Signaling ended before answer"));};
@@ -82,17 +96,17 @@ async function newPage(){
     window.snapshot=()=>Promise.all(peers.map(async({pc,video,errors,startupMs})=>{
       const stats=await pc.getStats(),values=[...stats.values()],v=values.find(s=>s.type==="inbound-rtp"&&s.kind==="video");
       const transport=stats.get(v?.transportId),pair=stats.get(transport?.selectedCandidatePairId),candidate=stats.get(pair?.remoteCandidateId);
-      return {time:performance.now()/1000,state:pc.connectionState,width:video.videoWidth,height:video.videoHeight,errors,startupMs,port:candidate?.port,
+      return {time:performance.now()/1000,state:pc.connectionState,width:video.videoWidth,height:video.videoHeight,errors,startupMs,port:candidate?.port,protocol:candidate?.protocol,
         frames:v?.framesDecoded||0,receivedFrames:v?.framesReceived||0,decoder:v?.decoderImplementation,powerEfficientDecoder:v?.powerEfficientDecoder,bytes:v?.bytesReceived||0,packets:v?.packetsReceived||0,lost:v?.packetsLost||0,dropped:v?.framesDropped||0,
         freezes:v?.freezeCount||0,freezeSeconds:v?.totalFreezesDuration||0,jitterDelay:v?.jitterBufferDelay||0,jitterEmitted:v?.jitterBufferEmittedCount||0,decodeSeconds:v?.totalDecodeTime||0};
     }));
-  });
+  },engine);
   pages.push(page);return page;
 }
 const snapshot=async()=>(await Promise.all(pages.map(page=>page.evaluate(()=>snapshot())))).flat();
 let current=0;
 try{
-  await fetch(base+"/hls/camera/index.m3u8");
+  await keepHls();
   for(const count of counts){
     const stage={viewers:count,passed:false,startedAt:new Date().toISOString()};result.stages.push(stage);
     try{
@@ -103,11 +117,11 @@ try{
         if(current%32===0)console.log(JSON.stringify({connected:current,target:count}));
       }
       await delay(5000);
-      await fetch(base+"/hls/camera/index.m3u8");
+      await keepHls();
       const before=await snapshot(),cpuBefore=await cpuSnapshot(),start=Date.now()/1000;
       stage.intervals=[];let previous=before;
       for(let elapsed=0;elapsed<seconds;elapsed+=10){
-        await delay(Math.min(10,seconds-elapsed)*1000);await fetch(base+"/hls/camera/index.m3u8");
+        await delay(Math.min(10,seconds-elapsed)*1000);await keepHls();
         const now=await snapshot();stage.intervals.push({at:Date.now()/1000,minFps:Math.min(...now.map((a,i)=>(a.frames-previous[i].frames)/(a.time-previous[i].time))),connected:now.filter(a=>a.state==="connected").length,stalled:now.filter((a,i)=>a.frames===previous[i].frames).length});previous=now;
       }
       const after=previous,end=Date.now()/1000,cpuAfter=await cpuSnapshot();
