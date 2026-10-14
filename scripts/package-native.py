@@ -32,6 +32,7 @@ source += [root/"scripts"/n for n in ["prepare-nvidia-headers.py", "nvidia-fixtu
 source.append(root/"scripts/verify-hls-idle.py")
 source.append(root/"scripts/browser-hls-idle.mjs")
 source.append(root/"scripts/hls-audio-skew-fixture.py")
+source.append(root/"scripts/browser-rtc-sharing.mjs")
 # Synthetic AVCC fixtures are required by the RTSP crate's compile-time tests.
 source += list((root/"ports/unreal-rtsp/tests/fixtures").glob("*.avcc"))
 source += [p for p in (root/"licenses").iterdir() if p.is_file()]
@@ -42,7 +43,7 @@ with zipfile.ZipFile(dist/"uvms-native-source.zip","w",compression=zipfile.ZIP_D
     for name in ['fdk-aac-0.8.0','fdk-aac-sys-0.5.0','opus-0.3.1','audiopus_sys-0.2.2','symphonia-0.5.5','symphonia-codec-aac-0.5.5','symphonia-core-0.5.5','symphonia-metadata-0.5.5']:
         archive.write(cache/(name+'.crate'),'uvms-native-source/third-party-sources/'+name+'.crate')
 files=[native,dist/"uvms-native-source.zip"]
-manifest={"version":"0.4.2","engine_revision":"hls-audio-boundary-2026-10-14","ui_revision":"surveillance-1","nvidia_api_compiled":b'libnvcuvid.so.1' in binary.read_bytes(),"binary_bytes":binary.stat().st_size,"binary_sha256":hashlib.sha256(binary.read_bytes()).hexdigest(),"artifacts":[{"name":p.name,"bytes":p.stat().st_size,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()} for p in files]}
+manifest={"version":"0.4.3","engine_revision":"shared-rtp-payloads-2026-10-14","ui_revision":"surveillance-1","nvidia_api_compiled":b'libnvcuvid.so.1' in binary.read_bytes(),"binary_bytes":binary.stat().st_size,"binary_sha256":hashlib.sha256(binary.read_bytes()).hexdigest(),"artifacts":[{"name":p.name,"bytes":p.stat().st_size,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()} for p in files]}
 (dist/"native-manifest.json").write_text(json.dumps(manifest,indent=2))
 (dist/"NATIVE-SHA256SUMS").write_text("".join(f'{item["sha256"]}  {item["name"]}\n' for item in manifest["artifacts"]))
 print(json.dumps(manifest,indent=2))

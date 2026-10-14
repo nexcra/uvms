@@ -7,6 +7,7 @@ mod mse;
 mod record;
 mod relay;
 mod rtc;
+mod rtp_video;
 mod video;
 use anyhow::{Context, Result};
 use axum::{

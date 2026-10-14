@@ -31,7 +31,7 @@ use webrtc::{
         sdp::{sdp_type::RTCSdpType, session_description::RTCSessionDescription},
         RTCPeerConnection,
     },
-    rtp::{codecs::h264::H264Payloader, header::Header, packet::Packet, packetizer::Payloader},
+    rtp::{header::Header, packet::Packet},
     rtp_transceiver::rtp_codec::{RTCRtpCodecCapability, RTCRtpCodecParameters, RTPCodecType},
     track::track_local::{
         track_local_static_rtp::TrackLocalStaticRTP, TrackLocal, TrackLocalWriter,
@@ -41,6 +41,7 @@ use webrtc::{
 use crate::{
     config::Config,
     ingest::{Feed, SharedFrame},
+    rtp_video::{Packetizer, PreparedFrame},
     App,
 };
 
@@ -209,7 +210,7 @@ async fn run(
 
     let mut frames = feed.subscribe();
     let mut rtcp_buffer = vec![0; 2048];
-    let mut payloader = H264Payloader::default();
+    let mut payloader = Packetizer::default();
     let mut sequence = 0u16;
     let mut waiting_for_idr = true;
     let mut connected = peer.connection_state() == RTCPeerConnectionState::Connected;
@@ -265,7 +266,7 @@ async fn run(
                     Ok(frame) => frame,
                     Err(broadcast::error::RecvError::Lagged(_)) => {
                         waiting_for_idr = true;
-                        payloader = H264Payloader::default();
+                        payloader = Packetizer::default();
                         continue;
                     }
                     Err(broadcast::error::RecvError::Closed) => break,
@@ -302,10 +303,14 @@ async fn run(
     Ok(())
 }
 
-fn normalized_payload(frame: &SharedFrame) -> Result<&Bytes> {
+fn prepared_payload(frame: &SharedFrame) -> Result<&PreparedFrame> {
     frame
         .rtc_payload
-        .get_or_init(|| prepare_payload(frame).map_err(|e| e.to_string()))
+        .get_or_init(|| {
+            prepare_payload(frame)
+                .and_then(|payload| PreparedFrame::new(payload, RTP_PAYLOAD_LIMIT))
+                .map_err(|e| e.to_string())
+        })
         .as_ref()
         .map_err(|e| anyhow::anyhow!(e.clone()))
 }
@@ -327,8 +332,8 @@ fn prepare_payload(frame: &Frame) -> Result<Bytes> {
     Ok(Bytes::from(normalized.into_payload()))
 }
 
-fn packet_payloads(frame: &SharedFrame, payloader: &mut H264Payloader) -> Result<Vec<Bytes>> {
-    Ok(payloader.payload(RTP_PAYLOAD_LIMIT, normalized_payload(frame)?)?)
+fn packet_payloads(frame: &SharedFrame, payloader: &mut Packetizer) -> Result<Vec<Bytes>> {
+    Ok(payloader.payloads(prepared_payload(frame)?))
 }
 
 // Original FUN_1800a0b40 truncates the 100ns timestamp to milliseconds then *90.
@@ -487,6 +492,7 @@ async fn signal_error(socket: &mut WebSocket, text: &str) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use webrtc::rtp::{codecs::h264::H264Payloader, packetizer::Payloader};
 
     #[test]
     fn original_answer_uses_udp_candidate_and_native_delimiter() {
@@ -504,7 +510,7 @@ mod tests {
     }
 
     #[test]
-    fn viewers_share_one_normalized_payload_without_changing_packetization() {
+    fn viewers_share_prepared_payloads_without_changing_packetization() {
         let nals = [
             &[0x67, 0x42, 0, 0x1f][..],
             &[0x68, 0xce, 0x38][..],
@@ -532,13 +538,10 @@ mod tests {
             let workers: Vec<_> = (0..16)
                 .map(|_| {
                     scope.spawn(|| {
-                        let shared = normalized_payload(&frame).unwrap();
-                        assert_eq!(shared.as_ref(), annex_b);
-                        assert_eq!(
-                            packet_payloads(&frame, &mut H264Payloader::default()).unwrap(),
-                            expected
-                        );
-                        shared.as_ptr() as usize
+                        assert_eq!(prepare_payload(&frame).unwrap().as_ref(), annex_b);
+                        let packets = packet_payloads(&frame, &mut Packetizer::default()).unwrap();
+                        assert_eq!(packets, expected);
+                        packets.last().unwrap().as_ptr() as usize
                     })
                 })
                 .collect();
@@ -551,7 +554,7 @@ mod tests {
             duration_90k: 6000,
             keyframe: true,
         });
-        assert!(normalized_payload(&invalid).is_err());
+        assert!(prepared_payload(&invalid).is_err());
         assert!(invalid.rtc_payload.get().unwrap().is_err());
     }
 
@@ -567,7 +570,7 @@ mod tests {
             duration_90k: 6000,
             keyframe: true,
         });
-        let payloads = packet_payloads(&frame, &mut H264Payloader::default()).unwrap();
+        let payloads = packet_payloads(&frame, &mut Packetizer::default()).unwrap();
         assert!(payloads.len() > 1);
         assert!(payloads
             .iter()

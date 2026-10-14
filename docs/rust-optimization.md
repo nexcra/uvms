@@ -1,5 +1,90 @@
 # Rust 공유 UDP·프레임 처리 개선 — 2026-10-14
 
+## v0.4.3: WebRTC RTP 분할 결과 공유
+
+v0.4.2까지는 프레임 정규화만 공유하고, 각 시청자가 `H264Payloader`로 같은
+Annex B를 다시 읽어 FU-A 조각을 할당·복사했다. v0.4.3은 프레임의 `OnceLock`에
+불변 RTP payload와 SPS/PPS 처리 순서를 보관한다. 최초 WebRTC 소비자만 이를
+만들고 이후 소비자는 `Bytes` 참조를 공유한다. WebRTC 소비자가 없으면 이
+비용은 발생하지 않는다.
+
+`src/rtp_video.rs`는 실제 FU-A·single-NAL 분할에 기존 `rtp 0.14.0` 라이브러리를
+그대로 사용한다. 시청자별 SPS/PPS 보류·교체·STAP-A 출력 상태는 별도로 유지해
+중간 접속, 큐 지연 후 복귀, 분리된 parameter-set 입력도 기존 동작을 보존한다.
+SSRC·RTP 시퀀스·marker·타임스탬프·SRTP 암호화·NACK 처리는 기존 세션 경로에
+남는다. 암호화된 패킷을 다른 시청자에게 재사용하는 구조가 아니며 전체 전송의
+zero-copy를 주장하지 않는다. 기존 원본 정규화 이식을 유지한 Rust 전송 최적화로,
+원본 uVMS의 미분석 내부 구현까지 복원했다는 의미는 아니다.
+
+정합성 검사는 기존 payloader와 byte-for-byte 비교, MTU 경계, 큰 IDR 복원,
+SPS/PPS가 서로 다른 프레임에 오는 경우, 초과 크기 parameter set, AUD/filler,
+새 시청자 상태 분리 및 여러 스레드의 실제 payload 주소 공유를 포함한다.
+
+### 분할 처리 자체의 측정
+
+`cargo test --release --features nvidia benchmark_shared_packetization -- --ignored --nocapture`
+로 실행한다. 이미 정규화된 32KiB NAL 2,000개를 16명에게 분할해 보내는 준비
+작업을 6회 측정하며 변경 전·후 실행 순서를 교대한다. 출력은 두 방식 모두
+992,000개 패킷이다. 처리 시간 중앙값은 1,049,543µs → 114,229µs로 약 9.19배
+짧았다. 이 측정에는 RTSP 수신, 정규화, 네트워크 전송, SRTP, 브라우저 디코딩이
+포함되지 않는다. 전체 서버 처리량이 9.19배 늘었다는 뜻이 아니다.
+원시 수치: `test-results/rtp-sharing/microbenchmark.json`.
+
+### 브라우저 동시 재생 측정
+
+별도 WSL Rust 서비스에 동일한 합성 H.264 640×360/설정 15fps 입력을 연결했다.
+Windows Edge headless 16개, 준비 5초 후 25초 측정, 녹화 off, 웹의 HLS 되감기
+캐시 활성 조건이다. 변경 전 v0.4.2와 변경 후 v0.4.3을 교대로 두 번씩 측정했고,
+각 실행 전 서비스 프로세스를 새로 시작했다. CPU는 서버 프로세스만 측정한
+**한 코어 100% 기준**이며 입력 생성기·브라우저 CPU는 제외한다.
+
+| 측정 | 변경 전 CPU | 변경 후 CPU | 변경 전 최대 RSS | 변경 후 최대 RSS |
+|---|---:|---:|---:|---:|
+| 1회 | 13.44% | 10.16% | 132.31MiB | 57.89MiB |
+| 2회 | 11.51% | 10.52% | 129.22MiB | 57.75MiB |
+| 평균 | 12.47% | 10.34% | 130.77MiB | 57.82MiB |
+
+이 조건에서 CPU는 약 17.1%, 측정별 최대 RSS의 평균은 약 55.8% 감소했다.
+평균 재생률은 전 14.47fps/후 14.44fps였고, 모든 실행의 RTP 패킷 손실은 0,
+같은 alias의 입력 RTSP 연결은 최대 1개였다. 두 버전 모두 미디어 UDP50800
+한 개와 시청자별 mDNS5353 소켓을 사용했다. 브라우저 dropped-frame 계수는
+일부 실행에서 증가했으므로 전 시청자 무손실 렌더링으로 표현하지 않는다.
+짧은 로컬 반복 측정이며 4K, WAN, 최대 동시 접속 수나 장기 안정성 결과가 아니다.
+
+원시 자료는 `test-results/rtp-sharing/{before-1,before-2,after-1,after-2}/`의
+`viewers.json`, `service-samples.json`이다. 변경 전 바이너리는 같은 디렉터리의
+`before/uvms-gateway`에 보존했다. 서비스 시험은 `rust-optimization-fixture.py`에
+각 바이너리를 명시하고 `benchmark-viewers.mjs`의 `UVMS_BENCH_*` 설정으로
+재현한다(HTTP8091, service=`uvms-rust-opt-bench`, source port=8554,
+counts=16, modes=webrtc, width=640, height=360, warmup=5, seconds=25).
+
+### 회귀 확인
+
+16명 측정 후 1명으로 줄이는 동일 순서의 추가 대조에서 CPU는 전 2.05%/후
+1.90%, 재생률은 각각 14.55/14.56fps였다. 단일 시청에서 CPU 증가가 관찰되지
+않았다. 이 단계의 RSS에는 앞선 16명 접속의 할당이 남으므로 단일 시청 메모리
+수치로 사용하지 않는다.
+
+`cargo test --all-targets --features nvidia`는 31개 통과, 별도 실행하는 벤치마크
+1개 제외이며 fmt와 clippy도 통과했다. 합성 AAC 입력의 WebRTC·MSE·HLS
+브라우저 음성 검사는 각각 100/100, 99/100, 100/100 구간에서 음성을 검출했다.
+
+`scripts/browser-rtc-sharing.mjs`는 두 alias에 16명 접속, 8명 종료 후 기존
+8명의 재생 지속, 새 8명 접속, 전체 16명의 추가 프레임 진행을 확인했다.
+모든 연결은 UDP50800, RTP 손실 0이며 재시도 없이 통과했다. 이전 검사의
+단일 통계 스냅샷에서는 재생 중인 한 연결의 포트를 찾지 못해 실패했다.
+새 검사는 `transport.selectedCandidatePairId`로 실제 선택된 연결을 따라가며,
+누락 시 재시도 이력을 남긴다. 이전 실패 기록도 삭제하지 않았다.
+자료: `test-results/rtp-sharing/{audio,peer-isolation,peer-isolation-selected}/`.
+
+WSL 운영 서비스(HTTP8080)에 v0.4.3을 배포한 뒤 합성 `camera`의 영상 수신,
+연결 해제·재접속 검사를 통과했다. 입력 설정과 기존 MP4 225개를 보존했다.
+실행 파일은 18,082,872바이트이며 서비스의 자식 프로세스와 FFmpeg 실행은
+없다. 배포 증거는 `test-results/rtp-sharing/deployment.json`, 재생 증거는
+`test-results/rtp-sharing/deployed-webrtc/browser.json`에 있다.
+
+## 이전 공유 UDP·정규화 최적화 기록
+
 현재 변경은 RTSP H.264 영상, WebRTC, WebSocket MSE, MP4 녹화, RTSP/TCP 재송출의 범위를 유지한다. HLS 등 원본 제품의 추가 기능은 [기능 대조표](feature-gap-2026-10-14.md)에 정리했으며 이번 성능 변경에서 구현하지 않았다. 카메라 자체 인증만 사용하고 서비스 접속 토큰은 추가하지 않았다.
 
 ## 분석 근거와 구현 경계

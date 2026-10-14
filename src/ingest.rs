@@ -9,11 +9,11 @@ use std::{
 use tokio::sync::{broadcast, Mutex};
 use tokio_util::sync::CancellationToken;
 use unreal_rtsp::{AudioConfig, AudioFrame, Frame, MediaEvent, VideoCodec, VideoConfig};
-/// An immutable sample with lazy shared RTC normalization. MSE-only feeds
-/// do not pay the Annex B conversion cost.
+/// An immutable sample with lazy shared RTC normalization and RTP payloads.
+/// MSE-only feeds do not pay the conversion or fragmentation cost.
 pub struct SharedFrame {
     frame: Frame,
-    pub(crate) rtc_payload: OnceLock<std::result::Result<bytes::Bytes, String>>,
+    pub(crate) rtc_payload: OnceLock<std::result::Result<crate::rtp_video::PreparedFrame, String>>,
 }
 impl SharedFrame {
     pub fn new(frame: Frame) -> Self {
