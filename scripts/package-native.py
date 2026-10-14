@@ -9,6 +9,7 @@ runtime=["README.md","RUN-LINUX.md","THIRD_PARTY.md","LICENSE","config.example.t
 runtime += [str(p.relative_to(root)) for p in (root/"web").rglob("*") if p.is_file()]
 runtime += ["docs/native-service-verification.md","docs/rtsp-relay.md"]
 runtime.append("docs/performance.md")
+runtime.append("docs/capacity-2026-10-14.md")
 runtime += ["docs/rust-optimization.md", "docs/feature-gap-2026-10-14.md", "docs/original-buffer-optimizations.md", "docs/original-shared-udp.md"]
 runtime += ["docs/rust-surveillance.md", "docs/surveillance-archive.md"]
 runtime += ["docs/nvidia-transcoding.md"]
@@ -18,7 +19,7 @@ with tarfile.open(native,"w:gz") as archive:
     archive.add(binary,arcname="uvms-native/uvms-gateway")
     for name in runtime:archive.add(root/name,arcname="uvms-native/"+name)
 source=[root/n for n in ["Cargo.toml","Cargo.lock","README.md","RUN-LINUX.md","THIRD_PARTY.md","LICENSE","config.example.toml",".env.example",".gitignore",".dockerignore","Dockerfile","compose.yaml","package.json","package-lock.json"]]
-for directory in ["src","web","deploy","docs","ports"]:
+for directory in ["src","web","deploy","docs","ports","examples"]:
     for p in (root/directory).rglob("*"):
         if p.is_file() and "target" not in p.parts and (p.suffix in [".rs",".cpp",".h",".md",".toml",".js",".html",".css",".yml",".yaml",".LICENSE"] or p.name in ["Cargo.lock","uvms.service","Caddyfile.example"]):
             source.append(p)
@@ -33,6 +34,7 @@ source.append(root/"scripts/verify-hls-idle.py")
 source.append(root/"scripts/browser-hls-idle.mjs")
 source.append(root/"scripts/hls-audio-skew-fixture.py")
 source.append(root/"scripts/browser-rtc-sharing.mjs")
+source.append(root/"scripts/benchmark-capacity.mjs")
 # Synthetic AVCC fixtures are required by the RTSP crate's compile-time tests.
 source += list((root/"ports/unreal-rtsp/tests/fixtures").glob("*.avcc"))
 source += [p for p in (root/"licenses").iterdir() if p.is_file()]

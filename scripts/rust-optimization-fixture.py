@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Isolated Rust benchmark against the existing local synthetic camera."""
-import json, pathlib, subprocess, sys, time, urllib.request
+import json, os, pathlib, subprocess, sys, time, urllib.request
 root=pathlib.Path(__file__).resolve().parents[1]
 directory=root/'test-results/rust-optimization/before'
 directory.mkdir(parents=True,exist_ok=True)
@@ -9,6 +9,8 @@ if not baseline.exists():
     baseline.write_bytes(pathlib.Path('/opt/uvms/uvms-gateway').read_bytes())
     baseline.chmod(0o755)
 binary=pathlib.Path(sys.argv[1]).resolve(strict=True) if len(sys.argv)>1 else baseline
+max_sessions=int(os.environ.get('UVMS_BENCH_MAX_SESSIONS', '32'))
+if not 1 <= max_sessions <= 1024: raise ValueError('max sessions must be 1..1024')
 pathlib.Path('/etc/uvms-rust-opt-bench.toml').write_text('''bind = "127.0.0.1:8091"
 rtsp_bind = "127.0.0.1:8561"
 web_root = "/opt/uvms/web"
@@ -25,7 +27,7 @@ record = false
 [streams.camera_two]
 url_env = "OPT_TEST_RTSP"
 record = false
-''')
+'''.replace('max_sessions = 32', f'max_sessions = {max_sessions}'))
 # Copy the chosen build into a stable service path before starting it.
 subprocess.run(['install','-d','/opt/uvms-rust-opt-bench'],check=True)
 subprocess.run(['systemctl','stop','uvms-rust-opt-bench'],check=False,stderr=subprocess.DEVNULL)
@@ -40,6 +42,7 @@ Environment=OPT_TEST_RTSP=rtsp://127.0.0.1:8554/camera
 ExecStart=/opt/uvms-rust-opt-bench/uvms-gateway
 StateDirectory=uvms-rust-opt-bench
 NoNewPrivileges=true
+LimitNOFILE=16384
 InaccessiblePaths=-/usr/bin/ffmpeg -/usr/bin/ffprobe
 ''')
 subprocess.run(['systemctl','daemon-reload'],check=True)
@@ -50,4 +53,4 @@ for attempt in range(40):
     except OSError:
         if attempt==39: raise
         time.sleep(.25)
-print(json.dumps({'service':'uvms-rust-opt-bench','binary':str(binary),'http':8091}))
+print(json.dumps({'service':'uvms-rust-opt-bench','binary':str(binary),'http':8091,'max_sessions':max_sessions}))
