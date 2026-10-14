@@ -5,6 +5,7 @@ mod hls;
 mod ingest;
 mod mse;
 mod record;
+mod record_input;
 mod relay;
 mod rtc;
 mod rtp_video;

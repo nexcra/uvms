@@ -75,12 +75,21 @@ pub async fn start(app: Arc<App>) -> Result<Vec<tokio::task::JoinHandle<()>>> {
         if !dir.file_type().await?.is_dir() {
             continue;
         }
+        let id = dir.file_name().to_string_lossy().into_owned();
+        let indexed = if app.config.streams.contains_key(&id) {
+            app.archive.indexed_files(&id).await?
+        } else {
+            HashMap::new()
+        };
         let mut files = tokio::fs::read_dir(dir.path()).await?;
         while let Some(f) = files.next_entry().await? {
             if f.file_type().await?.is_file() {
-                used = used.saturating_add(f.metadata().await?.len());
+                let bytes = f.metadata().await?.len();
+                used = used.saturating_add(bytes);
                 let name = f.file_name().to_string_lossy().into_owned();
-                let id = dir.file_name().to_string_lossy().into_owned();
+                if indexed.get(&name) == Some(&bytes) {
+                    continue;
+                }
                 if safe_filename(&name) && app.config.streams.contains_key(&id) {
                     if let Some(start_ms) =
                         name.split('-').next().and_then(|s| s.parse::<u64>().ok())
@@ -88,11 +97,11 @@ pub async fn start(app: Arc<App>) -> Result<Vec<tokio::task::JoinHandle<()>>> {
                         let duration = legacy_duration(&f.path()).await.ok();
                         app.archive
                             .insert(Clip {
-                                stream: id,
+                                stream: id.clone(),
                                 file: name,
                                 start_ms,
                                 end_ms: start_ms.saturating_add(duration.unwrap_or(0)),
-                                bytes: f.metadata().await?.len(),
+                                bytes,
                                 estimated: duration.is_none(),
                             })
                             .await?;
@@ -137,7 +146,7 @@ pub async fn start(app: Arc<App>) -> Result<Vec<tokio::task::JoinHandle<()>>> {
                     tokio::select!{_=app.shutdown.cancelled()=>break,_=control.changed()=>{}}
                     continue;
                 }
-                if outcome.is_err(){app.recordings.set(&id,"retrying").await;tracing::warn!(stream=%id,"Recording interrupted; check source and storage");}
+                if let Err(error)=&outcome{app.recordings.set(&id,"retrying").await;let backlog=error.downcast_ref::<tokio::sync::broadcast::error::RecvError>().map(|e|e.to_string());tracing::warn!(stream=%id,backlog,"Recording interrupted; check source and storage");}
                 if outcome.is_ok(){continue}
                 tokio::select!{_=app.shutdown.cancelled()=>break,_=control.changed()=>{},_=tokio::time::sleep(Duration::from_secs(3))=>{}}
             }
@@ -310,70 +319,145 @@ async fn record_source(
 ) -> Result<()> {
     let feed = tokio::select! {_=app.shutdown.cancelled()=>return Ok(()),r=app.hub.acquire(id,&app.config,app.shutdown.clone())=>r?};
     let v = feed.video();
-    let mut rx = feed.subscribe();
     let audio = feed.archive_audio();
-    let mut audio_rx = feed.subscribe_archive_audio();
+    let mut input = crate::record_input::Input::new(
+        feed.subscribe(),
+        feed.subscribe_archive_audio(),
+        audio.is_some(),
+        feed.stopped.clone(),
+    );
     let mut segment: Option<Segment> = None;
-    let result:Result<()>=async {
+    let result: Result<()> = async {
         loop {
-            if !control.borrow().active(default,now_ms()){break}
-            let f=tokio::select!{
+            if !control.borrow().active(default, now_ms()) {
+                break;
+            }
+            let queued = tokio::select! {
                 _=app.shutdown.cancelled()=>break,
                 _=control.changed()=>continue,
                 _=tokio::time::sleep(Duration::from_millis(250))=>continue,
-                _=feed.stopped.cancelled()=>bail!("source ended"),
-                a=audio_rx.recv(),if audio.is_some()=>{
-                    let a=a?;
-                    if let Some(s)=segment.as_mut(){
-                        if a.timestamp_90k>=s.base{
-                            let timestamp=(a.timestamp_90k-s.base).saturating_mul(audio.as_ref().unwrap().clock_rate as u64)/90000;
-                            let b=s.mux.audio_fragment(&a.data,timestamp,a.duration)?;
-                            app.recordings.reserve(b.len()as u64,app.config.recording_limit_bytes)?;
-                            if let Err(e)=s.file.write_all(&b).await{release_unwritten(&mut s.file,s.written,b.len()as u64,&app.recordings).await;segment.take();return Err(e.into())}
-                            s.written+=b.len()as u64;
-                            let audio_end=s.start_ms+(a.timestamp_90k-s.base)/90+a.duration as u64*1000/audio.as_ref().unwrap().clock_rate as u64;
-                            s.end_ms=s.end_ms.max(audio_end);
+                r=input.rx.recv()=>r.ok_or_else(||anyhow::anyhow!("recording reader ended"))??
+            };
+            let (f, received_ms) = match &queued.sample {
+                crate::record_input::Sample::Audio(a) => {
+                    if let Some(s) = segment.as_mut() {
+                        if a.timestamp_90k >= s.base {
+                            let timestamp = (a.timestamp_90k - s.base)
+                                .saturating_mul(audio.as_ref().unwrap().clock_rate as u64)
+                                / 90000;
+                            let b = s.mux.audio_fragment(&a.data, timestamp, a.duration)?;
+                            app.recordings
+                                .reserve(b.len() as u64, app.config.recording_limit_bytes)?;
+                            if let Err(e) = s.file.write_all(&b).await {
+                                release_unwritten(
+                                    &mut s.file,
+                                    s.written,
+                                    b.len() as u64,
+                                    &app.recordings,
+                                )
+                                .await;
+                                segment.take();
+                                return Err(e.into());
+                            }
+                            s.written += b.len() as u64;
+                            let audio_end = s.start_ms
+                                + (a.timestamp_90k - s.base) / 90
+                                + a.duration as u64 * 1000
+                                    / audio.as_ref().unwrap().clock_rate as u64;
+                            s.end_ms = s.end_ms.max(audio_end);
                         }
                     }
                     continue;
-                },
-                r=rx.recv()=>r?
+                }
+                crate::record_input::Sample::Video { frame, received_ms } => (frame, *received_ms),
             };
-            if segment.as_ref().is_some_and(|s|f.keyframe&&f.timestamp_90k.saturating_sub(s.base)>=app.config.segment_seconds*90000){
-                segment.take().unwrap().finish(app,id).await?;
+            if segment.as_ref().is_some_and(|s| {
+                f.keyframe
+                    && f.timestamp_90k.saturating_sub(s.base) >= app.config.segment_seconds * 90000
+            }) {
+                segment.take().unwrap().finish(app, id).await?;
             }
             if segment.is_none() {
-                if !f.keyframe{continue}
-                let mut mux=Muxer::new_av(&v.sps,&v.pps,v.width,v.height,audio.as_ref().map(|a|unreal_mp4::AudioConfig{sample_rate:a.clock_rate,channels:a.channels,decoder_config:a.config.clone()}))?;
-                let first=mux.fragment(&f.avcc,0,f.duration_90k,f.keyframe)?;
-                let reserved=(mux.init_segment().len()+first.len())as u64;
-                let timestamp=now_ms();
-                let stem=format!("{timestamp}-{}",uuid::Uuid::new_v4().simple());
-                let partial=dir.join(format!("{stem}.partial"));let final_path=dir.join(format!("{stem}.mp4"));
-                app.recordings.reserve(reserved,app.config.recording_limit_bytes)?;
-                let mut file=match tokio::fs::OpenOptions::new().write(true).create_new(true).open(&partial).await {
-                    Ok(file)=>file,
-                    Err(e)=>{app.recordings.release(reserved);return Err(e.into())}
+                if !f.keyframe {
+                    continue;
+                }
+                let mut mux = Muxer::new_av(
+                    &v.sps,
+                    &v.pps,
+                    v.width,
+                    v.height,
+                    audio.as_ref().map(|a| unreal_mp4::AudioConfig {
+                        sample_rate: a.clock_rate,
+                        channels: a.channels,
+                        decoder_config: a.config.clone(),
+                    }),
+                )?;
+                let first = mux.fragment(&f.avcc, 0, f.duration_90k, f.keyframe)?;
+                let reserved = (mux.init_segment().len() + first.len()) as u64;
+                let timestamp = received_ms;
+                let stem = format!("{timestamp}-{}", uuid::Uuid::new_v4().simple());
+                let partial = dir.join(format!("{stem}.partial"));
+                let final_path = dir.join(format!("{stem}.mp4"));
+                app.recordings
+                    .reserve(reserved, app.config.recording_limit_bytes)?;
+                let mut file = match tokio::fs::OpenOptions::new()
+                    .write(true)
+                    .create_new(true)
+                    .open(&partial)
+                    .await
+                {
+                    Ok(file) => file,
+                    Err(e) => {
+                        app.recordings.release(reserved);
+                        return Err(e.into());
+                    }
                 };
-                let initial:Result<()>=async {file.write_all(mux.init_segment()).await?;file.write_all(&first).await?;Ok(())}.await;
-                if let Err(e)=initial {release_unwritten(&mut file,0,reserved,&app.recordings).await;return Err(e)}
-                segment=Some(Segment{file,partial,final_path,mux,base:f.timestamp_90k,written:reserved,start_ms:timestamp,end_ms:timestamp+f.duration_90k as u64/90});
-                app.recordings.set(id,"recording").await;
+                let initial: Result<()> = async {
+                    file.write_all(mux.init_segment()).await?;
+                    file.write_all(&first).await?;
+                    Ok(())
+                }
+                .await;
+                if let Err(e) = initial {
+                    release_unwritten(&mut file, 0, reserved, &app.recordings).await;
+                    return Err(e);
+                }
+                segment = Some(Segment {
+                    file,
+                    partial,
+                    final_path,
+                    mux,
+                    base: f.timestamp_90k,
+                    written: reserved,
+                    start_ms: timestamp,
+                    end_ms: timestamp + f.duration_90k as u64 / 90,
+                });
+                app.recordings.set(id, "recording").await;
                 continue;
             }
-            let s=segment.as_mut().unwrap();
-            let b=s.mux.fragment(&f.avcc,f.timestamp_90k.saturating_sub(s.base),f.duration_90k,f.keyframe)?;
-            app.recordings.reserve(b.len()as u64,app.config.recording_limit_bytes)?;
+            let s = segment.as_mut().unwrap();
+            let b = s.mux.fragment(
+                &f.avcc,
+                f.timestamp_90k.saturating_sub(s.base),
+                f.duration_90k,
+                f.keyframe,
+            )?;
+            app.recordings
+                .reserve(b.len() as u64, app.config.recording_limit_bytes)?;
             // On disk failure retain .partial; a partial trailing box must not be published.
-            if let Err(e)=s.file.write_all(&b).await {
-                release_unwritten(&mut s.file,s.written,b.len()as u64,&app.recordings).await;
-                segment.take();return Err(e.into())
+            if let Err(e) = s.file.write_all(&b).await {
+                release_unwritten(&mut s.file, s.written, b.len() as u64, &app.recordings).await;
+                segment.take();
+                return Err(e.into());
             }
-            s.written+=b.len()as u64;
-            s.end_ms=s.end_ms.max(s.start_ms+(f.timestamp_90k-s.base+f.duration_90k as u64)/90);
+            s.written += b.len() as u64;
+            s.end_ms = s
+                .end_ms
+                .max(s.start_ms + (f.timestamp_90k - s.base + f.duration_90k as u64) / 90);
         }
         Ok(())
-    }.await;
+    }
+    .await;
     if let Some(s) = segment {
         s.finish(app, id).await?;
     }

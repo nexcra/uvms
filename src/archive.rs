@@ -3,7 +3,7 @@
 use anyhow::{ensure, Result};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
-use std::{path::PathBuf, sync::OnceLock};
+use std::{collections::HashMap, path::PathBuf, sync::OnceLock};
 
 #[derive(Default)]
 pub struct Archive {
@@ -111,6 +111,20 @@ impl Archive {
         );
         self.run(move|db| { db.execute("INSERT INTO clips VALUES(?1,?2,?3,?4,?5,?6) ON CONFLICT(stream,file) DO UPDATE SET start_ms=excluded.start_ms,end_ms=excluded.end_ms,bytes=excluded.bytes,estimated=excluded.estimated WHERE clips.estimated=1",params![c.stream,c.file,c.start_ms as i64,c.end_ms as i64,c.bytes as i64,c.estimated])?; Ok(()) }).await
     }
+    /// Completed append-only recordings already have exact metadata. Their
+    /// contents need not be reparsed on every startup; still check disk size.
+    pub async fn indexed_files(&self, stream: &str) -> Result<HashMap<String, u64>> {
+        let stream = stream.to_owned();
+        self.run(move |db| {
+            let mut query =
+                db.prepare("SELECT file,bytes FROM clips WHERE stream=?1 AND estimated=0")?;
+            let rows = query.query_map([stream], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? as u64))
+            })?;
+            Ok(rows.collect::<std::result::Result<HashMap<_, _>, _>>()?)
+        })
+        .await
+    }
     pub async fn search(
         &self,
         stream: Option<String>,
@@ -213,5 +227,35 @@ mod tests {
             .is_empty());
         assert!(b.search(None, 201, 1000, 10, 0).await.unwrap().is_empty());
         std::fs::remove_dir_all(p).unwrap();
+    }
+    #[tokio::test]
+    async fn startup_cache_contains_only_exact_metadata_for_the_requested_camera() {
+        let root = std::env::temp_dir().join(format!("uvms-index-cache-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir(&root).unwrap();
+        let archive = Archive::default();
+        archive.initialize(root.to_str().unwrap()).await.unwrap();
+        for (stream, file, bytes, estimated) in [
+            ("cam", "1-exact.mp4", 123, false),
+            ("cam", "2-legacy.mp4", 456, true),
+            ("other", "1-exact.mp4", 789, false),
+        ] {
+            archive
+                .insert(Clip {
+                    stream: stream.into(),
+                    file: file.into(),
+                    start_ms: 1,
+                    end_ms: 2,
+                    bytes,
+                    estimated,
+                })
+                .await
+                .unwrap();
+        }
+        assert_eq!(
+            archive.indexed_files("cam").await.unwrap(),
+            HashMap::from([("1-exact.mp4".into(), 123)])
+        );
+        assert!(archive.indexed_files("missing").await.unwrap().is_empty());
+        std::fs::remove_dir_all(root).unwrap();
     }
 }

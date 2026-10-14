@@ -1,0 +1,720 @@
+{
+  "passed": true,
+  "started_at": "2026-10-14T17:45:02.238Z",
+  "finished_at": "2026-10-14T18:46:08.593Z",
+  "measured_seconds": 3601.156,
+  "fixture": {
+    "run": "1791999886914466722",
+    "recording_dir": "/var/lib/uvms-soak/recordings-1791999886914466722",
+    "binary_sha256": "4020b778981fa7b2663c0a780aece417159edba75abee129c38512eb380bff3a",
+    "binary_bytes": 18138488,
+    "aliases": [
+      "aac",
+      "pcmu",
+      "pcma",
+      "opus"
+    ],
+    "http": 8099,
+    "source_proxy_port": 18576
+  },
+  "thresholds": {
+    "sampleIntervalSeconds": 5,
+    "audioWindowsPerSample": 5,
+    "audioWindowMs": 100,
+    "minimumSampleFps": 5,
+    "persistentBadSampleSeconds": 10,
+    "recoveryGraceSeconds": 75,
+    "recordingFreshnessSeconds": 45
+  },
+  "events": [
+    {
+      "kind": "source-off",
+      "camera": "aac",
+      "start_seconds": 125.094,
+      "restored_seconds": 158.823,
+      "recovery_seconds": {
+        "webrtc/aac": 19.717,
+        "mse/aac": 39.491,
+        "hls/aac": 19.717
+      },
+      "recording_recovery_seconds": {
+        "aac": 19.717
+      }
+    },
+    {
+      "kind": "blackhole",
+      "camera": "pcmu",
+      "start_seconds": 303.653,
+      "restored_seconds": 350.32,
+      "recovery_seconds": {
+        "webrtc/pcmu": 19.729,
+        "mse/pcmu": 13.145,
+        "hls/pcmu": 19.729
+      },
+      "recording_recovery_seconds": {
+        "pcmu": 19.729
+      }
+    },
+    {
+      "kind": "restart-inputs",
+      "camera": null,
+      "start_seconds": 600.268,
+      "restored_seconds": 600.63,
+      "recovery_seconds": {
+        "webrtc/aac": 26.443,
+        "mse/aac": 19.792,
+        "hls/aac": 19.792,
+        "webrtc/pcmu": 26.443,
+        "mse/pcmu": 19.792,
+        "hls/pcmu": 19.792,
+        "webrtc/pcma": 26.443,
+        "mse/pcma": 19.792,
+        "hls/pcma": 19.792,
+        "webrtc/opus": 26.443,
+        "mse/opus": 19.792,
+        "hls/opus": 19.792
+      },
+      "recording_recovery_seconds": {
+        "aac": 19.792,
+        "pcmu": 19.792,
+        "pcma": 19.792,
+        "opus": 19.792
+      }
+    },
+    {
+      "kind": "restart-gateway",
+      "camera": null,
+      "start_seconds": 903.469,
+      "restored_seconds": 903.947,
+      "recovery_seconds": {
+        "webrtc/aac": 26.448,
+        "mse/aac": 13.27,
+        "hls/aac": 19.834,
+        "webrtc/pcmu": 26.448,
+        "mse/pcmu": 13.27,
+        "hls/pcmu": 19.834,
+        "webrtc/pcma": 26.448,
+        "mse/pcma": 13.27,
+        "hls/pcma": 19.834,
+        "webrtc/opus": 26.448,
+        "mse/opus": 13.27,
+        "hls/opus": 19.834
+      },
+      "recording_recovery_seconds": {
+        "aac": 19.834,
+        "pcmu": 19.834,
+        "pcma": 19.834,
+        "opus": 19.834
+      }
+    },
+    {
+      "kind": "source-off",
+      "camera": "aac",
+      "start_seconds": 1200.38,
+      "restored_seconds": 1220.903,
+      "recovery_seconds": {
+        "webrtc/aac": 19.721,
+        "mse/aac": 19.721,
+        "hls/aac": 6.584
+      },
+      "recording_recovery_seconds": {
+        "aac": 19.721
+      }
+    },
+    {
+      "kind": "source-off",
+      "camera": "aac",
+      "start_seconds": 1444.608,
+      "restored_seconds": 1465.089,
+      "recovery_seconds": {
+        "webrtc/aac": 19.684,
+        "mse/aac": 19.684,
+        "hls/aac": 6.577
+      },
+      "recording_recovery_seconds": {
+        "aac": 19.684
+      }
+    },
+    {
+      "kind": "source-off",
+      "camera": "aac",
+      "start_seconds": 1682.035,
+      "restored_seconds": 1702.613,
+      "recovery_seconds": {
+        "webrtc/aac": 19.723,
+        "mse/aac": 19.723,
+        "hls/aac": 6.58
+      },
+      "recording_recovery_seconds": {
+        "aac": 19.723
+      }
+    },
+    {
+      "kind": "source-off",
+      "camera": "aac",
+      "start_seconds": 1926.344,
+      "restored_seconds": 1946.862,
+      "recovery_seconds": {
+        "webrtc/aac": 19.732,
+        "mse/aac": 19.732,
+        "hls/aac": 6.592
+      },
+      "recording_recovery_seconds": {
+        "aac": 19.732
+      }
+    },
+    {
+      "kind": "source-off",
+      "camera": "aac",
+      "start_seconds": 2164.118,
+      "restored_seconds": 2184.547,
+      "recovery_seconds": {
+        "webrtc/aac": 19.733,
+        "mse/aac": 19.733,
+        "hls/aac": 6.585
+      },
+      "recording_recovery_seconds": {
+        "aac": 19.733
+      }
+    }
+  ],
+  "playback": {
+    "webrtc/aac": {
+      "samples": 430,
+      "mean_fps": 14.445554745369048,
+      "low_fps_samples": 0,
+      "silent_samples": 0,
+      "audio_windows": 2150,
+      "audible_windows": 2150,
+      "generations": [
+        1,
+        9,
+        11,
+        13,
+        19,
+        25,
+        31,
+        37,
+        43
+      ]
+    },
+    "webrtc/opus": {
+      "samples": 521,
+      "mean_fps": 14.416543881704891,
+      "low_fps_samples": 0,
+      "silent_samples": 0,
+      "audio_windows": 2605,
+      "audible_windows": 2605,
+      "generations": [
+        1,
+        3,
+        5
+      ]
+    },
+    "webrtc/pcma": {
+      "samples": 521,
+      "mean_fps": 14.440396643297337,
+      "low_fps_samples": 0,
+      "silent_samples": 0,
+      "audio_windows": 2605,
+      "audible_windows": 2605,
+      "generations": [
+        1,
+        3,
+        5
+      ]
+    },
+    "webrtc/pcmu": {
+      "samples": 503,
+      "mean_fps": 14.443591765201269,
+      "low_fps_samples": 0,
+      "silent_samples": 0,
+      "audio_windows": 2515,
+      "audible_windows": 2515,
+      "generations": [
+        1,
+        7,
+        9,
+        11
+      ]
+    },
+    "mse/aac": {
+      "samples": 430,
+      "mean_fps": 14.340646113934813,
+      "low_fps_samples": 0,
+      "silent_samples": 11,
+      "audio_windows": 2150,
+      "audible_windows": 2070,
+      "generations": [
+        1,
+        11,
+        15,
+        17,
+        25,
+        33,
+        41,
+        49,
+        57
+      ]
+    },
+    "mse/opus": {
+      "samples": 521,
+      "mean_fps": 14.08617017196421,
+      "low_fps_samples": 0,
+      "silent_samples": 20,
+      "audio_windows": 2605,
+      "audible_windows": 2481,
+      "generations": [
+        1,
+        5,
+        7
+      ]
+    },
+    "mse/pcma": {
+      "samples": 521,
+      "mean_fps": 14.12307165749695,
+      "low_fps_samples": 0,
+      "silent_samples": 20,
+      "audio_windows": 2605,
+      "audible_windows": 2477,
+      "generations": [
+        1,
+        5,
+        7
+      ]
+    },
+    "mse/pcmu": {
+      "samples": 503,
+      "mean_fps": 14.112220041647307,
+      "low_fps_samples": 0,
+      "silent_samples": 22,
+      "audio_windows": 2515,
+      "audible_windows": 2358,
+      "generations": [
+        1,
+        7,
+        11,
+        13
+      ]
+    },
+    "hls/aac": {
+      "samples": 430,
+      "mean_fps": 14.378653176816012,
+      "low_fps_samples": 0,
+      "silent_samples": 13,
+      "audio_windows": 2150,
+      "audible_windows": 2069,
+      "generations": [
+        1,
+        5,
+        7,
+        9,
+        11,
+        13,
+        15
+      ]
+    },
+    "hls/opus": {
+      "samples": 521,
+      "mean_fps": 14.460762641532563,
+      "low_fps_samples": 0,
+      "silent_samples": 16,
+      "audio_windows": 2605,
+      "audible_windows": 2511,
+      "generations": [
+        1
+      ]
+    },
+    "hls/pcma": {
+      "samples": 521,
+      "mean_fps": 14.483371770270058,
+      "low_fps_samples": 0,
+      "silent_samples": 12,
+      "audio_windows": 2605,
+      "audible_windows": 2527,
+      "generations": [
+        1
+      ]
+    },
+    "hls/pcmu": {
+      "samples": 503,
+      "mean_fps": 14.49248906649164,
+      "low_fps_samples": 0,
+      "silent_samples": 13,
+      "audio_windows": 2515,
+      "audible_windows": 2430,
+      "generations": [
+        1,
+        5
+      ]
+    }
+  },
+  "resources": {
+    "peak_rss_mib": 172.7734375,
+    "final": {
+      "time": 1792003567.5139291,
+      "pid": 86618,
+      "rss_mib": 155.23828125,
+      "logical_cpus": 16,
+      "camera_inputs": 0,
+      "source_inputs": 0,
+      "udp_ports": [
+        51900
+      ],
+      "threads": 17,
+      "fd_count": 12,
+      "cpu_percent_one_core": 0
+    },
+    "quiet_mean_cpu_one_core_percent": 11.493711548134103,
+    "quiet_input_connections": [
+      4,
+      5
+    ],
+    "first_quiet_5min_mean_rss_mib": 120.44750515919812,
+    "last_quiet_5min_mean_rss_mib": 167.57902018229166,
+    "first_quiet_fd_range": [
+      37,
+      41
+    ],
+    "last_quiet_fd_range": [
+      33,
+      36
+    ],
+    "previous_quiet_5min_mean_rss_mib": 166.08858235677084,
+    "last_two_quiet_5min_rss_delta_mib": 1.4904378255208144
+  },
+  "archive": {
+    "passed": true,
+    "files": 927,
+    "bytes": 2336210672,
+    "partial_files": 0,
+    "integrity": "ok",
+    "live_api_checked": true,
+    "recording_gaps_over_2s": [
+      {
+        "stream": "aac",
+        "from_ms": 1792000041523,
+        "to_ms": 1792000077627,
+        "gap_ms": 36104,
+        "injected_outage": true
+      },
+      {
+        "stream": "aac",
+        "from_ms": 1792000517534,
+        "to_ms": 1792000521551,
+        "gap_ms": 4017,
+        "injected_outage": true
+      },
+      {
+        "stream": "aac",
+        "from_ms": 1792001117886,
+        "to_ms": 1792001138902,
+        "gap_ms": 21016,
+        "injected_outage": true
+      },
+      {
+        "stream": "aac",
+        "from_ms": 1792001361847,
+        "to_ms": 1792001382868,
+        "gap_ms": 21021,
+        "injected_outage": true
+      },
+      {
+        "stream": "aac",
+        "from_ms": 1792001598038,
+        "to_ms": 1792001621502,
+        "gap_ms": 23464,
+        "injected_outage": true
+      },
+      {
+        "stream": "aac",
+        "from_ms": 1792001843107,
+        "to_ms": 1792001865519,
+        "gap_ms": 22412,
+        "injected_outage": true
+      },
+      {
+        "stream": "aac",
+        "from_ms": 1792002080911,
+        "to_ms": 1792002103084,
+        "gap_ms": 22173,
+        "injected_outage": true
+      },
+      {
+        "stream": "pcmu",
+        "from_ms": 1792000220681,
+        "to_ms": 1792000270484,
+        "gap_ms": 49803,
+        "injected_outage": true
+      },
+      {
+        "stream": "pcmu",
+        "from_ms": 1792000516295,
+        "to_ms": 1792000521493,
+        "gap_ms": 5198,
+        "injected_outage": true
+      },
+      {
+        "stream": "pcma",
+        "from_ms": 1792000517471,
+        "to_ms": 1792000521485,
+        "gap_ms": 4014,
+        "injected_outage": true
+      },
+      {
+        "stream": "opus",
+        "from_ms": 1792000517546,
+        "to_ms": 1792000521552,
+        "gap_ms": 4006,
+        "injected_outage": true
+      }
+    ],
+    "failures": [],
+    "per_camera": {
+      "aac": 228,
+      "pcmu": 231,
+      "pcma": 234,
+      "opus": 234
+    },
+    "max_packet_gap_ms": {
+      "video": 6.938893903907228e-13,
+      "audio": 2.001000000000006
+    }
+  },
+  "failures": [],
+  "media_errors": [
+    {
+      "mode": "webrtc",
+      "errors": []
+    },
+    {
+      "mode": "mse",
+      "errors": []
+    },
+    {
+      "mode": "hls",
+      "errors": []
+    }
+  ],
+  "unexpected_media_errors": [],
+  "restart_http_ready_ms": 492,
+  "recording_controls_before_restart": {
+    "aac": {
+      "mode": "on",
+      "schedules": []
+    },
+    "pcmu": {
+      "mode": "on",
+      "schedules": []
+    },
+    "pcma": {
+      "mode": "auto",
+      "schedules": [
+        {
+          "start_ms": 1791999902973,
+          "end_ms": 1792003682973,
+          "repeat_seconds": null
+        }
+      ]
+    },
+    "opus": {
+      "mode": "auto",
+      "schedules": [
+        {
+          "start_ms": 1791999902990,
+          "end_ms": 1792003682990,
+          "repeat_seconds": null
+        }
+      ]
+    }
+  },
+  "recording_controls_after_restart": {
+    "aac": {
+      "active": true,
+      "mode": "on",
+      "schedules": [],
+      "status": "connecting"
+    },
+    "pcmu": {
+      "active": true,
+      "mode": "on",
+      "schedules": [],
+      "status": "connecting"
+    },
+    "pcma": {
+      "active": true,
+      "mode": "auto",
+      "schedules": [
+        {
+          "end_ms": 1792003682973,
+          "repeat_seconds": null,
+          "start_ms": 1791999902973
+        }
+      ],
+      "status": "connecting"
+    },
+    "opus": {
+      "active": true,
+      "mode": "auto",
+      "schedules": [
+        {
+          "end_ms": 1792003682990,
+          "repeat_seconds": null,
+          "start_ms": 1791999902990
+        }
+      ],
+      "status": "connecting"
+    }
+  },
+  "archive_startup": {
+    "passed": true,
+    "recordings_unchanged": true,
+    "results": [
+      {
+        "case": "before",
+        "seconds_to_http_ready": 51.455833218002226,
+        "files": 264,
+        "used_bytes": 658854235,
+        "version": "0.4.3",
+        "index_preserved": true,
+        "unindexed_import_checked": false,
+        "binary_sha256": "73492572ee633567f197df43aa29b4a879a6f52d36e0b63f4df22d29e77e0fb1",
+        "work": "/tmp/uvms-archive-startup-mdra1f89"
+      },
+      {
+        "case": "after",
+        "seconds_to_http_ready": 0.0519042520027142,
+        "files": 264,
+        "used_bytes": 658854235,
+        "version": "0.4.4",
+        "index_preserved": true,
+        "unindexed_import_checked": false,
+        "binary_sha256": "4020b778981fa7b2663c0a780aece417159edba75abee129c38512eb380bff3a",
+        "work": "/tmp/uvms-archive-startup-l63d5x4x"
+      },
+      {
+        "case": "after-unindexed",
+        "seconds_to_http_ready": 0.3473319780023303,
+        "files": 264,
+        "used_bytes": 658854235,
+        "version": "0.4.4",
+        "index_preserved": true,
+        "unindexed_import_checked": true,
+        "binary_sha256": "4020b778981fa7b2663c0a780aece417159edba75abee129c38512eb380bff3a",
+        "work": "/tmp/uvms-archive-startup-vl7ss0x1"
+      }
+    ]
+  },
+  "quota": {
+    "quota_bytes": 1048576,
+    "passed": true,
+    "restarts": 1,
+    "stable_seconds_per_run": 6
+  },
+  "disk_wait": {
+    "passed": true,
+    "results": [
+      {
+        "case": "before",
+        "binary_sha256": "390217f87786f008a7d008c725a492eac838cf6522e224e217bbc5dc1d2f7f83",
+        "recordings": 16,
+        "injected_fsync_wait_seconds": 5,
+        "delayed_calls": 4,
+        "unexpected_gaps": [
+          {
+            "camera": "aac",
+            "milliseconds": 5012
+          },
+          {
+            "camera": "aac",
+            "milliseconds": 5064
+          },
+          {
+            "camera": "pcmu",
+            "milliseconds": 5010
+          },
+          {
+            "camera": "pcmu",
+            "milliseconds": 5066
+          },
+          {
+            "camera": "pcma",
+            "milliseconds": 5010
+          },
+          {
+            "camera": "pcma",
+            "milliseconds": 5065
+          },
+          {
+            "camera": "opus",
+            "milliseconds": 4984
+          },
+          {
+            "camera": "opus",
+            "milliseconds": 5062
+          }
+        ],
+        "decode_errors": [
+          "aac/1791998858417-1a37b43bbda64836a84823c7de8fb223.mp4",
+          "opus/1791998858622-557f9d24ca304cb18662751ed8c8c8cd.mp4",
+          "pcma/1791998858511-c41b4e31ce4c44ba9304db0e4a819710.mp4",
+          "pcmu/1791998858445-138c198b52524956b707b28fb1572de8.mp4"
+        ],
+        "recording_interruptions": 4,
+        "work": "/tmp/uvms-recording-disk-wait-p7wv3qzm/before"
+      },
+      {
+        "case": "after",
+        "binary_sha256": "4020b778981fa7b2663c0a780aece417159edba75abee129c38512eb380bff3a",
+        "recordings": 16,
+        "injected_fsync_wait_seconds": 5,
+        "delayed_calls": 4,
+        "unexpected_gaps": [],
+        "decode_errors": [],
+        "recording_interruptions": 0,
+        "work": "/tmp/uvms-recording-disk-wait-p7wv3qzm/after"
+      }
+    ]
+  },
+  "previous_failed_soak": {
+    "passed": false,
+    "measured_seconds": 3603.635,
+    "binary_sha256": "390217f87786f008a7d008c725a492eac838cf6522e224e217bbc5dc1d2f7f83",
+    "files": 939,
+    "failures": [
+      {
+        "unexpected_recording_gap": {
+          "stream": "pcmu",
+          "from_ms": 1791995114187,
+          "to_ms": 1791995116328,
+          "gap_ms": 2141,
+          "injected_outage": false
+        }
+      },
+      {
+        "unexpected_recording_gap": {
+          "stream": "opus",
+          "from_ms": 1791995037516,
+          "to_ms": 1791995040554,
+          "gap_ms": 3038,
+          "injected_outage": false
+        }
+      },
+      {
+        "unexpected_recording_gap": {
+          "stream": "opus",
+          "from_ms": 1791995040620,
+          "to_ms": 1791995044785,
+          "gap_ms": 4165,
+          "injected_outage": false
+        }
+      },
+      {
+        "file": "1791995040554-b6c4a5c7ae004c12897f0ac3faa6a68b.mp4",
+        "errors": [
+          "Non-decodable or non-monotonic audio"
+        ]
+      }
+    ]
+  }
+}

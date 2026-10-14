@@ -31,7 +31,8 @@ while True:
                 if parts[9] in sockets: udp_ports.append(int(parts[1].split(':')[1], 16))
         data = {'time':now, 'pid':pid, 'rss_mib':int(status['VmRSS'].split()[0])/1024,
                 'logical_cpus':os.cpu_count(), 'camera_inputs':camera_inputs,
-                'source_inputs':source_inputs, 'udp_ports':sorted(udp_ports), 'threads':int(status['Threads'])}
+                'source_inputs':source_inputs, 'udp_ports':sorted(udp_ports), 'threads':int(status['Threads']),
+                'fd_count':len(list((root/'fd').iterdir()))}
         if previous:
             data['cpu_percent_one_core'] = 100*(ticks-previous[1])/hz/(now-previous[0])
         previous = (now,ticks)

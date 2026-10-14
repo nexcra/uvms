@@ -805,7 +805,7 @@ class CameraPlayer {
     const label = this.element.querySelector(".camera-rec");
     const state = camera?.recording;
     label.dataset.state = state || "unknown";
-    label.textContent = !camera ? "녹화 상태 확인 중" : !camera.record ? "녹화 꺼짐" : ({recording:"● 녹화 중",storage_full:"저장 한도 도달",retrying:"녹화 재시도",connecting:"녹화 연결 중",stopped:"녹화 중지"}[state] || "녹화 대기");
+    label.textContent = !camera ? "녹화 상태 확인 중" : ({recording:"● 녹화 중",off:"녹화 꺼짐",scheduled:"예약 대기",storage_full:"저장 한도 도달",retrying:"녹화 재시도",connecting:"녹화 연결 중",stopped:"녹화 중지"}[state] || "녹화 상태 확인 중");
     const info = audioCapability(camera, this.mode), audioLabel = this.element.querySelector(".camera-audio");
     if (info) {
       audioLabel.textContent = info.state === "warning" ? "음성 확인 필요" : info.available ? "음성 지원" : "음성 없음 / 대기";

@@ -13,6 +13,7 @@ runtime.append("docs/capacity-2026-10-14.md")
 runtime += ["docs/go2rtc-comparison-2026-10-15.md", "docs/go2rtc-comparison-2026-10-15.json"]
 runtime += ["docs/rust-optimization.md", "docs/feature-gap-2026-10-14.md", "docs/original-buffer-optimizations.md", "docs/original-shared-udp.md"]
 runtime += ["docs/rust-surveillance.md", "docs/surveillance-archive.md"]
+runtime += ["docs/surveillance-soak-2026-10-15.md", "docs/surveillance-soak-2026-10-15.json"]
 runtime += ["docs/nvidia-transcoding.md"]
 runtime += [str(p.relative_to(root)) for p in (root/"licenses").iterdir() if p.is_file()]
 native=dist/"uvms-native-linux-x86_64.tar.gz"
@@ -38,6 +39,11 @@ source.append(root/"scripts/browser-rtc-sharing.mjs")
 source.append(root/"scripts/benchmark-capacity.mjs")
 source += [root/"scripts"/n for n in ["go2rtc-benchmark-fixture.py", "compare-go2rtc.ps1", "summarize-go2rtc.py"]]
 source.append(root/"docs/go2rtc-comparison-2026-10-15.json")
+source += [root/"scripts"/n for n in ["soak-fixture.py", "soak-surveillance.mjs", "verify-soak-recordings.py", "verify-soak-recording-labels.mjs", "verify-soak-quota.py", "verify-archive-startup.py", "summarize-soak.py"]]
+source.append(root/"scripts/deploy-rust-update.py")
+source.append(root/"scripts/verify-recording-disk-wait.py")
+source += [root/"scripts"/n for n in ["soak-recording-gaps.mjs", "test-soak-recording-gaps.mjs"]]
+source.append(root/"docs/surveillance-soak-2026-10-15.json")
 # Synthetic AVCC fixtures are required by the RTSP crate's compile-time tests.
 source += list((root/"ports/unreal-rtsp/tests/fixtures").glob("*.avcc"))
 source += [p for p in (root/"licenses").iterdir() if p.is_file()]
@@ -48,7 +54,7 @@ with zipfile.ZipFile(dist/"uvms-native-source.zip","w",compression=zipfile.ZIP_D
     for name in ['fdk-aac-0.8.0','fdk-aac-sys-0.5.0','opus-0.3.1','audiopus_sys-0.2.2','symphonia-0.5.5','symphonia-codec-aac-0.5.5','symphonia-core-0.5.5','symphonia-metadata-0.5.5']:
         archive.write(cache/(name+'.crate'),'uvms-native-source/third-party-sources/'+name+'.crate')
 files=[native,dist/"uvms-native-source.zip"]
-manifest={"version":"0.4.3","engine_revision":"shared-rtp-payloads-2026-10-14","ui_revision":"surveillance-1","nvidia_api_compiled":b'libnvcuvid.so.1' in binary.read_bytes(),"binary_bytes":binary.stat().st_size,"binary_sha256":hashlib.sha256(binary.read_bytes()).hexdigest(),"artifacts":[{"name":p.name,"bytes":p.stat().st_size,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()} for p in files]}
+manifest={"version":"0.4.4","engine_revision":"bounded-recording-backlog-2026-10-15","ui_revision":"recording-state-2026-10-15","nvidia_api_compiled":b'libnvcuvid.so.1' in binary.read_bytes(),"binary_bytes":binary.stat().st_size,"binary_sha256":hashlib.sha256(binary.read_bytes()).hexdigest(),"artifacts":[{"name":p.name,"bytes":p.stat().st_size,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()} for p in files]}
 (dist/"native-manifest.json").write_text(json.dumps(manifest,indent=2))
 (dist/"NATIVE-SHA256SUMS").write_text("".join(f'{item["sha256"]}  {item["name"]}\n' for item in manifest["artifacts"]))
 print(json.dumps(manifest,indent=2))

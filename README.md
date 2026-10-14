@@ -1,5 +1,10 @@
 # UVMS Rust Linux media service
 
+v0.4.4는 녹화 수신을 파일 확정 작업과 분리해 저장 지연에 따른 누락을 줄인다.
+이미 색인된 완료 녹화의 반복 분석을 생략해 재시작 대기를 줄이고,
+다중 화면의 수동·예약 녹화 상태 표시를 수정한다. 다중 카메라·동시 녹화와
+장애 복구 검증은 [장시간 시험 보고서](docs/surveillance-soak-2026-10-15.md)에 있다.
+
 v0.4.3은 여러 WebRTC 시청자가 같은 영상의 RTP 분할 결과를 공유해 반복 복사를 줄인다. 시청자별 SPS/PPS 상태·시퀀스·SSRC·암호화는 유지한다. v0.4.2의 HLS 음성 경계 수정과 HLS 유휴 자원 회수도 유지한다.
 
 v0.4.0은 NVIDIA SDK 직접 H265→H264 변환 경로를 추가한다. **실제 NVIDIA GPU가 없어 하드웨어 변환은 아직 미검증**이며, 지원 조건·빌드·시험 절차는 [docs/nvidia-transcoding.md](docs/nvidia-transcoding.md)에 있다. H264 입력은 기존 경로를 유지한다.
