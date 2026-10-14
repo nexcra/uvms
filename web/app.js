@@ -339,7 +339,7 @@ async function connect(options = {}) {
   const pc = mode === "webrtc" ? new RTCPeerConnection() : null;
   const current = { pc, mode, abort: new AbortController(), stream: ui.stream.value, frames: 0, lastStatsAt: 0, lastFrameAt: 0, startedAt: performance.now() };
   session = current;
-  warmDvr(current.stream);
+  warmDvr(current.stream, current);
   current.from = options.from || null;
   setAudioStatus("음성 트랙 확인 중");
   ui["current-stream"].textContent = ui.stream.value;
@@ -485,10 +485,17 @@ function connectHls(current) {
   current.statsTimer = setInterval(() => receiveStats(current), 1000);
   byId("playback-hint").textContent = current.from ? dateLabel(current.from) + " 부근부터 재생 · 영상 조각의 시작 시간으로 맞춰집니다." : "HLS 실시간 재생 · 서버에 쌓인 영상 범위에서 되감기할 수 있습니다.";
 }
-function warmDvr(stream) {
-  // Watching live also starts the bounded rewind cache for this same shared
-  // camera feed. Status failures must not interrupt WebRTC or MSE playback.
-  jsonRequest("/api/hls/" + encodeURIComponent(stream)).catch(() => {});
+function warmDvr(stream, owner) {
+  if (owner.mode === "hls") return; // Playlist/segment requests already renew it.
+  const signal = owner.abort.signal;
+  const renew = () => {
+    if (!signal.aborted) fetch("/api/hls/" + encodeURIComponent(stream) + "/keepalive", {
+      method: "POST", cache: "no-store", signal
+    }).catch(() => {});
+  };
+  renew();
+  const timer = setInterval(renew, 5000);
+  signal.addEventListener("abort", () => clearInterval(timer), {once: true});
 }
 async function rewind(seconds) {
   if (!ui.stream.value) return;
@@ -832,9 +839,9 @@ class CameraPlayer {
   }
   connect() {
     if (this.dead) return;
-    warmDvr(this.id);
     this.release(); const g = this.generation;
     this.abort = new AbortController(); this.received = 0; this.lastFrames = 0; this.lastProgress = performance.now();
+    warmDvr(this.id, this);
     this.element.dataset.frames = "0"; this.stats.textContent = this.mode.toUpperCase(); this.status("connecting", "연결 중");
     this.deadline = setTimeout(() => this.fail(g, "연결 시간 초과"), this.mode === "hls" ? 60000 : 25000);
     this.video.onerror = () => this.fail(g, "영상 디코딩 오류");

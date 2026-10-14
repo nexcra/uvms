@@ -17,6 +17,9 @@ recording_limit_bytes = 10737418240
 hls_segment_seconds = 2
 hls_window_seconds = 300
 hls_limit_bytes = 134217728
+# Stop HLS production and release its RAM after no playback requests (15..86400s).
+# Active WebRTC/MSE/recording/RTSP users keep their shared camera input.
+hls_idle_seconds = 60
 # H264 stays compressed passthrough. H265 uses one shared NVIDIA transcoder per alias.
 # Requires a --features nvidia build and an HEVC-decode/H264-encode capable GPU.
 nvidia_device = 0

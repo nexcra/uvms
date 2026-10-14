@@ -22,6 +22,7 @@ pub struct Config {
     pub hls_segment_seconds: u64,
     pub hls_window_seconds: u64,
     pub hls_limit_bytes: u64,
+    pub hls_idle_seconds: u64,
     pub nvidia_device: u32,
     pub nvidia_bitrate: u32,
     pub streams: BTreeMap<String, StreamConfig>,
@@ -44,6 +45,7 @@ impl Default for Config {
             hls_segment_seconds: 2,
             hls_window_seconds: 300,
             hls_limit_bytes: 128 * 1024 * 1024,
+            hls_idle_seconds: 60,
             nvidia_device: 0,
             nvidia_bitrate: 4_000_000,
             streams: BTreeMap::new(),
@@ -65,6 +67,7 @@ impl Config {
             || self.hls_window_seconds < 3 * self.hls_segment_seconds
             || self.hls_window_seconds > 86400
             || !(1024 * 1024..=1024 * 1024 * 1024).contains(&self.hls_limit_bytes)
+            || !(15..=86400).contains(&self.hls_idle_seconds)
         {
             bail!("invalid HLS cache limits")
         }

@@ -89,6 +89,7 @@ fn router(app: Arc<App>) -> Router {
         .route("/api/recordings",get(record::list))
         .route("/api/recording/{stream}",get(record::control_status).post(record::control))
         .route("/api/hls/{stream}",get(hls::status))
+        .route("/api/hls/{stream}/keepalive",axum::routing::post(hls::keepalive))
         .route("/hls/{stream}/index.m3u8",get(hls::playlist))
         .route("/hls/{stream}/{file}",get(hls::media))
         .route("/api/recordings/{stream}/{file}",get(record::download))

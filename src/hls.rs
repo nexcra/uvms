@@ -4,7 +4,7 @@ use crate::{record::now_ms, App};
 use anyhow::{bail, Result};
 use axum::{
     extract::{Path, Query, State as AxumState},
-    http::{header, StatusCode},
+    http::{header, HeaderMap, StatusCode},
     response::{IntoResponse, Response},
     Json,
 };
@@ -31,6 +31,8 @@ struct Cache {
     epoch: u64,
     target: u64,
     error: Option<String>,
+    running: bool,
+    last_access: Option<tokio::time::Instant>,
 }
 struct Clip {
     sequence: u64,
@@ -41,6 +43,16 @@ struct Clip {
     data: Bytes,
 }
 impl Cache {
+    fn touch(&mut self) {
+        self.last_access = Some(tokio::time::Instant::now());
+    }
+    fn stop(&mut self) {
+        self.running = false;
+        self.clips.clear();
+        self.bytes = 0;
+        self.error = None;
+        // Keep sequence/epoch counters so a reconnect cannot reuse old media URLs.
+    }
     fn push(&mut self, mut clip: Clip, window: u64, limit: usize) {
         clip.sequence = self.next;
         self.next += 1;
@@ -126,28 +138,60 @@ impl Cache {
 }
 async fn ensure(app: &Arc<App>, id: &str) -> Arc<Mutex<Cache>> {
     let mut cameras = app.hls.cameras.lock().await;
-    if let Some(c) = cameras.get(id) {
-        return c.clone();
-    }
     // A restart must not reuse media URLs while a player still caches old init
     // and segment responses from the previous service process.
-    let cache = Arc::new(Mutex::new(Cache {
-        next: now_ms(),
-        epoch: now_ms(),
-        target: app.config.hls_segment_seconds,
-        ..Cache::default()
-    }));
-    cameras.insert(id.into(), cache.clone());
+    let cache = cameras
+        .entry(id.into())
+        .or_insert_with(|| {
+            Arc::new(Mutex::new(Cache {
+                next: now_ms(),
+                epoch: now_ms(),
+                target: app.config.hls_segment_seconds,
+                ..Cache::default()
+            }))
+        })
+        .clone();
+    let mut c = cache.lock().await;
+    c.touch();
+    if c.running {
+        return cache.clone();
+    }
+    c.running = true;
+    drop(c);
+    drop(cameras);
     let (app, id, cache_task) = (app.clone(), id.to_owned(), cache.clone());
     tokio::spawn(async move {
-        while !app.shutdown.is_cancelled() {
-            if run(&app, &id, &cache_task).await.is_err() {
-                cache_task.lock().await.error = Some("camera or media unavailable".into());
-            }
-            tokio::select! {_=app.shutdown.cancelled()=>break,_=tokio::time::sleep(Duration::from_secs(2))=>{}}
+        tokio::select! {
+            _ = app.shutdown.cancelled() => { cache_task.lock().await.stop(); }
+            _ = expire_idle(&cache_task, Duration::from_secs(app.config.hls_idle_seconds)) => {}
+            _ = async {
+                loop {
+                    if run(&app, &id, &cache_task).await.is_err() {
+                        cache_task.lock().await.error = Some("camera or media unavailable".into());
+                    }
+                    tokio::time::sleep(Duration::from_secs(2)).await;
+                }
+            } => {}
         }
     });
     cache
+}
+
+// The check and stop share the same lock as ensure/touch. A request arriving at
+// the boundary either renews this worker or starts exactly one replacement.
+async fn expire_idle(cache: &Mutex<Cache>, idle: Duration) {
+    loop {
+        let deadline = {
+            let mut c = cache.lock().await;
+            let deadline = c.last_access.unwrap_or_else(tokio::time::Instant::now) + idle;
+            if tokio::time::Instant::now() >= deadline {
+                c.stop();
+                return;
+            }
+            deadline
+        };
+        tokio::time::sleep_until(deadline).await;
+    }
 }
 async fn run(app: &App, id: &str, cache: &Mutex<Cache>) -> Result<()> {
     let feed = tokio::select! {_=app.shutdown.cancelled()=>return Ok(()),r=app.hub.acquire(id,&app.config,app.shutdown.clone())=>r?};
@@ -266,7 +310,13 @@ pub async fn playlist(
     let deadline = tokio::time::Instant::now()
         + Duration::from_secs((3 * app.config.hls_segment_seconds + 15).min(45));
     while tokio::time::Instant::now() < deadline {
-        if let Some(text) = cache.lock().await.playlist(q.from) {
+        let text = {
+            let mut c = cache.lock().await;
+            // A cold playlist request is still an active consumer while waiting.
+            c.touch();
+            c.playlist(q.from)
+        };
+        if let Some(text) = text {
             return (
                 [
                     (header::CONTENT_TYPE, "application/vnd.apple.mpegurl"),
@@ -292,9 +342,28 @@ pub async fn status(AxumState(app): AxumState<Arc<App>>, Path(id): Path<String>)
     if !app.config.streams.contains_key(&id) {
         return StatusCode::NOT_FOUND.into_response();
     }
-    let cache = ensure(&app, &id).await;
+    let cache = app.hls.cameras.lock().await.get(&id).cloned();
+    let Some(cache) = cache else {
+        return Json(json!({"ready":false,"running":false,"oldest_ms":null,"newest_ms":null,"window_seconds":app.config.hls_window_seconds,"idle_seconds":app.config.hls_idle_seconds,"bytes":0,"error":null})).into_response();
+    };
     let c = cache.lock().await;
-    Json(json!({"ready":c.live_start().is_some(),"oldest_ms":c.clips.front().map(|c|c.start_ms),"newest_ms":c.clips.back().map(|c|c.start_ms+(c.duration*1000.)as u64),"window_seconds":app.config.hls_window_seconds,"bytes":c.bytes,"error":c.error})).into_response()
+    Json(json!({"ready":c.live_start().is_some(),"running":c.running,"oldest_ms":c.clips.front().map(|c|c.start_ms),"newest_ms":c.clips.back().map(|c|c.start_ms+(c.duration*1000.)as u64),"window_seconds":app.config.hls_window_seconds,"idle_seconds":app.config.hls_idle_seconds,"bytes":c.bytes,"error":c.error})).into_response()
+}
+// Explicit playback demand preserves rewind while WebRTC/MSE is being watched.
+// There is no token or session cookie; use the same origin rule as recording APIs.
+pub async fn keepalive(
+    AxumState(app): AxumState<Arc<App>>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Response {
+    if !crate::same_origin(&headers) {
+        return StatusCode::FORBIDDEN.into_response();
+    }
+    if !app.config.streams.contains_key(&id) {
+        return StatusCode::NOT_FOUND.into_response();
+    }
+    ensure(&app, &id).await;
+    StatusCode::NO_CONTENT.into_response()
 }
 pub async fn media(
     AxumState(app): AxumState<Arc<App>>,
@@ -305,7 +374,7 @@ pub async fn media(
         return StatusCode::NOT_FOUND.into_response();
     };
     drop(cameras);
-    let c = cache.lock().await;
+    let mut c = cache.lock().await;
     let data = if let Some(epoch) = file
         .strip_prefix("init-")
         .and_then(|f| f.strip_suffix(".mp4"))
@@ -327,6 +396,9 @@ pub async fn media(
     } else {
         None
     };
+    if data.is_some() && c.running {
+        c.touch();
+    }
     match data {
         Some(b) => (
             [
@@ -342,6 +414,79 @@ pub async fn media(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[tokio::test(start_paused = true)]
+    async fn playback_renews_idle_deadline_and_stop_releases_cache_without_reusing_urls() {
+        let cache = Arc::new(Mutex::new(Cache {
+            running: true,
+            epoch: 7,
+            ..Cache::default()
+        }));
+        {
+            let mut c = cache.lock().await;
+            c.touch();
+            c.push(clip(7, 1000), 300, 1000);
+        }
+        let worker = {
+            let cache = cache.clone();
+            tokio::spawn(async move { expire_idle(&cache, Duration::from_secs(60)).await })
+        };
+        tokio::task::yield_now().await;
+        tokio::time::advance(Duration::from_secs(50)).await;
+        cache.lock().await.touch();
+        tokio::time::advance(Duration::from_secs(20)).await;
+        tokio::task::yield_now().await;
+        assert!(cache.lock().await.running);
+        tokio::time::advance(Duration::from_secs(41)).await;
+        worker.await.unwrap();
+        let mut c = cache.lock().await;
+        assert!(!c.running);
+        assert!(c.clips.is_empty());
+        assert_eq!(c.bytes, 0);
+        assert_eq!((c.next, c.epoch), (1, 7));
+        c.push(clip(8, 2000), 300, 1000);
+        assert_eq!(c.clips.front().unwrap().sequence, 1);
+    }
+
+    #[tokio::test]
+    async fn status_does_not_start_input_and_concurrent_playlists_share_one_worker() {
+        let mut config = crate::config::Config::default();
+        config.streams.insert(
+            "camera".into(),
+            crate::config::StreamConfig {
+                url_env: "UVMS_HLS_TEST_NO_CAMERA_CREDENTIALS".into(),
+                record: false,
+            },
+        );
+        let app = Arc::new(App {
+            config: Arc::new(config),
+            slots: Arc::new(tokio::sync::Semaphore::new(32)),
+            hub: crate::ingest::Hub::default(),
+            shutdown: tokio_util::sync::CancellationToken::new(),
+            recordings: crate::record::Status::default(),
+            archive: crate::archive::Archive::default(),
+            hls: State::default(),
+            rtc_udp: tokio::sync::OnceCell::new(),
+        });
+        let response = status(AxumState(app.clone()), Path("camera".into())).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        assert!(app.hls.cameras.lock().await.is_empty());
+        let mut requests = Vec::new();
+        for _ in 0..16 {
+            let app = app.clone();
+            requests.push(tokio::spawn(async move { ensure(&app, "camera").await }));
+        }
+        let mut caches = Vec::new();
+        for request in requests {
+            caches.push(request.await.unwrap());
+        }
+        assert!(caches.iter().all(|c| Arc::ptr_eq(c, &caches[0])));
+        assert_eq!(app.hls.cameras.lock().await.len(), 1);
+        let before = caches[0].lock().await.last_access;
+        status(AxumState(app.clone()), Path("camera".into())).await;
+        assert_eq!(caches[0].lock().await.last_access, before);
+        app.shutdown.cancel();
+    }
+
     fn clip(epoch: u64, start_ms: u64) -> Clip {
         Clip {
             sequence: 0,
