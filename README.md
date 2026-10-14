@@ -1,6 +1,6 @@
 # UVMS Rust Linux media service
 
-v0.4.1은 HLS 상태 조회의 불필요한 카메라 연결을 제거하고, 시청 종료 후 HLS 작업과 RAM 캐시를 자동 회수한다. 기존 녹화와 다른 재생 방식의 공유 입력은 유지한다.
+v0.4.2는 HLS 영상 조각 경계에서 늦게 도착한 음성을 버리던 오류를 수정한다. RTCP 음성 시각 보정 중 생기던 주기적 음성 공백과 네이티브 HLS 재생 중단을 재현해 검증했다. v0.4.1의 HLS 유휴 자원 회수는 유지한다.
 
 v0.4.0은 NVIDIA SDK 직접 H265→H264 변환 경로를 추가한다. **실제 NVIDIA GPU가 없어 하드웨어 변환은 아직 미검증**이며, 지원 조건·빌드·시험 절차는 [docs/nvidia-transcoding.md](docs/nvidia-transcoding.md)에 있다. H264 입력은 기존 경로를 유지한다.
 

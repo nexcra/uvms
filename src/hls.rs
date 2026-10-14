@@ -193,6 +193,33 @@ async fn expire_idle(cache: &Mutex<Cache>, idle: Duration) {
         tokio::time::sleep_until(deadline).await;
     }
 }
+
+// Video IDRs delimit HTTP files, not the audio clock. RTCP correction or
+// independent receiver scheduling can deliver audio from before the current
+// video segment. Dropping it at every IDR punches periodic holes in the audio
+// buffered range; native HLS then fails with "Loaded ranges conflict with media
+// time". Keep every in-epoch audio AU, with its original corrected timestamp.
+// Only audio before the first video IDR is outside this mux's timeline.
+fn append_audio(
+    mux: &mut Muxer,
+    data: &mut Vec<u8>,
+    frame: &unreal_rtsp::AudioFrame,
+    base: Option<u64>,
+    clock_rate: u32,
+    budget: usize,
+) -> Result<()> {
+    let Some(relative) = base.and_then(|base| frame.timestamp_90k.checked_sub(base)) else {
+        return Ok(());
+    };
+    let timestamp = relative.saturating_mul(u64::from(clock_rate)) / 90000;
+    let fragment = mux.audio_fragment(&frame.data, timestamp, frame.duration)?;
+    if data.len().saturating_add(fragment.len()) > budget {
+        bail!("HLS cache limit")
+    }
+    data.extend_from_slice(&fragment);
+    Ok(())
+}
+
 async fn run(app: &App, id: &str, cache: &Mutex<Cache>) -> Result<()> {
     let feed = tokio::select! {_=app.shutdown.cancelled()=>return Ok(()),r=app.hub.acquire(id,&app.config,app.shutdown.clone())=>r?};
     let v = feed.video();
@@ -224,12 +251,10 @@ async fn run(app: &App, id: &str, cache: &Mutex<Cache>) -> Result<()> {
         let frame = tokio::select! {_=app.shutdown.cancelled()=>return Ok(()),_=feed.stopped.cancelled()=>bail!("source stopped"),
         a=audio_rx.recv(),if audio.is_some()=>{
             let a=a?;
-                if let Some(base)=base {if a.timestamp_90k>=segment_start{
-                let timestamp=(a.timestamp_90k-base).saturating_mul(audio.as_ref().unwrap().clock_rate as u64)/90000;
-                let b=mux.audio_fragment(&a.data,timestamp,a.duration)?;
-                if data.len().saturating_add(b.len()).saturating_add(init.len())>app.config.hls_limit_bytes as usize{bail!("HLS cache limit")}
-                data.extend_from_slice(&b);
-            }}continue;
+            append_audio(&mut mux, &mut data, &a, base,
+                audio.as_ref().unwrap().clock_rate,
+                (app.config.hls_limit_bytes as usize).saturating_sub(init.len()))?;
+            continue;
         },r=rx.recv()=>r?};
         if base.is_none() {
             if !frame.keyframe {
@@ -414,6 +439,86 @@ pub async fn media(
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn av_mux() -> Muxer {
+        Muxer::new_av(
+            &[0x67, 0x42, 0xe0, 0x1e],
+            &[0x68, 0xce],
+            640,
+            360,
+            Some(unreal_mp4::AudioConfig {
+                sample_rate: 48000,
+                channels: 2,
+                decoder_config: vec![0x11, 0x90],
+            }),
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn audio_survives_video_segment_rollover_and_rtcp_negative_slew() {
+        let mut mux = av_mux();
+        let base = 90000;
+        let mut data = Vec::new();
+        let mut emitted = Vec::new();
+        let mut segment = 0;
+        // 90 seconds of AAC, with up to 2 seconds of negative SR correction.
+        // The video consumer reaches each IDR first. This used to discard an
+        // increasing prefix of audio in every segment (eventually all of it).
+        for index in 0..4218u64 {
+            let raw = index * 1920;
+            let next_segment = raw / 180000;
+            if index == 0 || next_segment != segment {
+                segment = next_segment;
+                data.clear();
+                data.extend(
+                    mux.fragment(&[0, 0, 0, 2, 0x65, 0xb0], segment * 180000, 6000, true)
+                        .unwrap(),
+                );
+            }
+            let correction = index.saturating_sub(400).saturating_mul(90).min(180000);
+            let frame = unreal_rtsp::AudioFrame {
+                data: vec![0x21, 0x10, (index % 256) as u8],
+                timestamp: index * 1024,
+                duration: 1024,
+                timestamp_90k: base + raw - correction,
+            };
+            let start = data.len();
+            append_audio(&mut mux, &mut data, &frame, Some(base), 48000, 1024 * 1024).unwrap();
+            let fragment = &data[start..];
+            assert_eq!(&fragment[108..], frame.data.as_slice());
+            emitted.push(u64::from_be_bytes(fragment[60..68].try_into().unwrap()));
+        }
+        assert_eq!(emitted.len(), 4218);
+        // Corrected AUs may overlap slightly during slew, but no positive holes
+        // or backwards DTS are introduced by a video boundary.
+        assert!(emitted
+            .windows(2)
+            .all(|p| p[1] > p[0] && p[1] - p[0] <= 1024));
+    }
+
+    #[test]
+    fn audio_before_epoch_is_skipped_and_segment_budget_stays_bounded() {
+        let mut mux = av_mux();
+        let mut data = Vec::new();
+        let mut frame = unreal_rtsp::AudioFrame {
+            data: vec![1, 2],
+            timestamp: 0,
+            duration: 1024,
+            timestamp_90k: 89999,
+        };
+        append_audio(&mut mux, &mut data, &frame, None, 48000, 4096).unwrap();
+        append_audio(&mut mux, &mut data, &frame, Some(90000), 48000, 4096).unwrap();
+        assert!(data.is_empty());
+        mux.fragment(&[0, 0, 0, 2, 0x65, 0xb0], 0, 6000, true)
+            .unwrap();
+        frame.timestamp_90k = 90000;
+        append_audio(&mut mux, &mut data, &frame, Some(90000), 48000, 110).unwrap();
+        assert_eq!(data.len(), 110);
+        frame.timestamp_90k += 1920;
+        assert!(append_audio(&mut mux, &mut data, &frame, Some(90000), 48000, 110).is_err());
+        assert_eq!(data.len(), 110);
+    }
+
     #[tokio::test(start_paused = true)]
     async fn playback_renews_idle_deadline_and_stop_releases_cache_without_reusing_urls() {
         let cache = Arc::new(Mutex::new(Cache {

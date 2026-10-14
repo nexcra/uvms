@@ -47,10 +47,73 @@ API 회귀를 통과했다. WebRTC/MSE 음성, HLS 신규 연결과 순차 재�
 음성 샘플도 확인했다. 최초 녹화 회귀와 병행한 음성 검사에서 Edge 네이티브
 HLS에 DEMUXER_ERROR_COULD_NOT_PARSE가 1회 발생했으며, 별도 신규 연결 및
 순차 재검사는 통과했다. 같은 조건의 기존 바이너리 검사도 통과해 이 1회의
-원인을 확정하지 못했다. 장기 안정성 검증이나 해당 오류 해결 완료로 해석하지 않는다.
+당시에는 원인을 확정하지 못했다. 아래 v0.4.2 검증에서 동일한 오류를 재현하고
+영상 조각 경계의 음성 누락을 수정했다.
 
 `scripts/browser-hls-idle.mjs`는 웹의 WebRTC 시청 중 되감기 캐시 유지,
 해제 후 캐시 회수, 재접속 시 재생 구간 재생성을 별도 시험 포트에서 확인한다.
+
+## v0.4.2 HLS 음성 경계 오류
+
+원인은 `src/hls.rs`가 음성의 보정된 `timestamp_90k`를 현재 **영상 조각의
+시작 시각**과 비교해 이전 시각이면 버리던 조건이다. 영상·음성은 서로 다른
+수신 큐를 사용한다. RTCP Sender Report로 음성 시각을 앞당기거나 음성 도착이
+늦어지면, 새 영상 IDR 이후에도 이전 영상 구간에 해당하는 정상 음성이 온다.
+이를 버리면서 매 조각마다 음성 구간에 구멍이 생겼다.
+
+수정 후에는 최초 IDR로 정한 **mux 전체의 시작 시각** 이전 음성만 제외한다.
+그 이후 음성 AU는 영상 조각 전환과 관계없이 원래 AAC 바이트, 보정된 시각,
+1024샘플 길이를 그대로 유지한다. 조각 바이트 제한과 HLS 유휴 정리는 유지한다.
+추가 인코더·FFmpeg 프로세스·인증은 없다. RTCP 시각 보정 자체를 끄거나
+오류를 플레이어 재시작으로 감추는 변경도 아니다.
+
+재현은 실카메라 대신 합성 H.264 + AAC 48kHz 2채널/440Hz 입력에 음성 SR의
+NTP 시각만 -4초 이동시킨 별도 RTSP 프록시로 진행했다. v0.4.1에서 네이티브
+Edge HLS가 `DEMUXER_ERROR_COULD_NOT_PARSE`로 중단됐고, DevTools Media 로그의
+하위 오류는 `HlsDemuxerStatus::Loaded ranges conflict with media time`이었다.
+오류 시 재생 시각은 36.846954초, 가용 구간은
+`[[35.184392,36.202058],[38.31362,39.209286]]`이었다.
+HTTP 요청은 정상이며 코덱 변환 오류도 없었다. 저장한 18개 미디어 조각에서
+음성 DTS 공백은 최대 **1097ms**였다.
+
+같은 시계 오차 조건에서 수정 후 90초 음성 분석은 통과했고, 실제 재생 시각은
+95초 이상 진행했다. 최초 수정 시험은 900개 분석 창 중 869개에서 음성을
+검출했고, 최종 v0.4.2 첫 시험은 871개였다. 최종 첫 시험의 저장 조각 50개에서
+음성 DTS의 양의 공백은 0ms, 브라우저 미디어 오류는 0개였다. 이 수치는
+의도적으로 큰 시계 차이를 가한 단기 회귀 결과이며 모든 카메라나 브라우저의
+장기 안정성·무음 없는 완벽한 동기화를 주장하지 않는다. RTCP slew 중 작은
+AAC 시간 겹침 및 시계 변환 반올림은 기존 동작으로 남는다.
+
+최종 반복 결과: 네이티브 HLS 90초 × 2회에서 음성 871/900, 881/900창,
+hls.js 90초에서 866/900창을 확인했고 모두 재생이 진행되며 미디어 오류가
+없었다. 일반 합성 AAC·PCMU·PCMA·Opus 입력은 네이티브 HLS와 hls.js에서
+각각 100/100창 음성을 검출했다. AAC WebRTC/MSE, 수동·예약 녹화, Range
+다운로드, HLS/DVR API, 상태 조회·유휴 회수·재접속 검사도 통과했다.
+Rust 테스트 28개, fmt, Clippy를 통과했다. 실제 카메라 음성 및 Safari/iOS의
+검증 결과는 포함하지 않는다.
+
+회귀 자료는 로컬 `test-results/hls-audio-fix/`에 저장한다. 특히
+`skew-before/aac-hls-0-media.json`은 실패 원인,
+`final-skew-native/audio.json`은 최종 반복 재생,
+`timeline-summary.json`은 실제 조각의 시간축 비교다. 합성 미디어 캡처는
+Git 및 배포 패키지에 포함하지 않는다.
+
+재현 절차(기존 `surveillance-fixture.py` 합성 송출기 필요):
+
+```sh
+# Linux/WSL: 독립 프록시 18565, Rust HTTP 8097/RTSP 18561/UDP 51700
+python3 scripts/hls-audio-skew-fixture.py --binary /absolute/path/uvms-gateway
+# 별도 터미널: Node + Playwright/Edge (Windows에서는 $env:NAME='value' 사용)
+UVMS_TEST_URL=http://127.0.0.1:8097 UVMS_TEST_STREAMS=aac \
+UVMS_TEST_MODES=hls UVMS_COLD_HLS=1 UVMS_AUDIO_WINDOWS=900 \
+UVMS_TEST_REPEATS=2 UVMS_MIN_AUDIO_RATIO=0.9 UVMS_CAPTURE_HLS=1 \
+UVMS_TEST_OUTPUT=test-results/hls-audio-regression node scripts/browser-audio.mjs
+```
+
+`UVMS_FORCE_HLS_JS=1`로 같은 입력을 hls.js 경로에서도 검사한다. 시험 스크립트는
+미디어 오류를 반드시 실패로 처리하고, 실제 음성 샘플·재생 진행·침묵 구간과
+[DevTools Media 진단](https://chromedevtools.github.io/devtools-protocol/tot/Media/)
+이벤트를 기록한다. 종료 시 프록시 터미널에서 Ctrl-C로 임시 서비스를 정리한다.
 
 ## 녹화 제어
 
