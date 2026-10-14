@@ -1,0 +1,11 @@
+[package]
+name = "unreal-mp4"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = "1"
+
+[dev-dependencies]
+serde_json = "1"

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>UVMS · 실시간 영상</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='7' fill='%230c1113'/%3E%3Cpath d='M18 17v21a14 14 0 0 0 28 0V17' fill='none' stroke='%2373d7ad' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/vendor/hls.min.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand"><i aria-hidden="true"></i><strong>UVMS</strong><span>MEDIA CONSOLE</span></div>
+      <div class="status" id="status" data-state="idle" role="status"><i aria-hidden="true"></i><span id="status-label">연결 대기</span></div>
+    </header>
+    <div class="workspace">
+      <section class="view-section" aria-label="실시간 영상">
+        <div class="view-toolbar">
+          <div class="view-heading"><span class="eyebrow">LIVE OPERATIONS</span><strong>실시간 영상</strong></div>
+          <div class="toolbar-center"><span>VIDEO <b>H.264</b></span><span id="wall-summary">SINGLE VIEW</span></div><div class="layout-switch" role="group" aria-label="화면 분할"><button type="button" data-layout="1" aria-pressed="true">1</button><button type="button" data-layout="4" aria-pressed="false">4</button><button type="button" data-layout="9" aria-pressed="false">9</button><button type="button" data-layout="16" aria-pressed="false">16</button></div>
+        </div>
+        <div id="single-stage" class="stage">
+          <div class="video-frame">
+            <video id="video" autoplay muted playsinline controls aria-label="카메라 실시간 영상"></video>
+            <div id="empty" class="empty-state"><span>LIVE VIEW</span><strong id="empty-title">카메라 연결 중</strong><p id="empty-message">등록된 카메라를 불러오고 있습니다.</p></div>
+            <div class="video-caption"><span id="current-stream">NO STREAM</span><span id="transport-caption">WEBRTC</span></div>
+          </div>
+          <div class="stage-note"><span id="transport-path">RTSP → WEBRTC</span><p id="audio-status">음성 수신 여부 확인 대기</p></div>
+          <div class="playback-controls" aria-label="재생 조작"><button id="sound" type="button" aria-pressed="false">소리 켜기</button><button type="button" data-rewind="30">30초 전</button><button type="button" data-rewind="60">1분 전</button><button type="button" data-rewind="300">5분 전</button><button id="return-live" type="button">실시간으로</button></div>
+          <p class="form-hint" id="playback-hint" role="status">되감기는 서버에 쌓인 HLS 영상 범위에서 가능합니다.</p>
+        </div>
+        <div id="wall-stage" hidden><div id="camera-wall" class="camera-wall" data-layout="4"></div><p id="wall-hint" class="form-hint">카메라를 선택한 뒤 연결을 누르세요. 각 화면은 독립적으로 재연결됩니다.</p></div>
+      </section>
+      <aside class="side-panel" aria-label="카메라 연결 설정">
+        <div class="panel-header"><span>CONNECTION</span><h1>카메라 연결</h1><p>이 서버에 등록된 카메라를 재생합니다.</p></div>
+        <div id="error" class="error-message" role="alert" hidden></div>
+        <form id="connection-form" autocomplete="off">
+          <button id="load-streams" type="button">카메라 목록 새로고침</button>
+          <fieldset id="camera-selection" hidden><legend>동시에 볼 카메라</legend><div id="camera-choices"></div><p id="selection-count" class="form-hint">목록을 먼저 불러오세요.</p></fieldset><label class="field-row" for="stream"><span>카메라</span><select id="stream" class="field" disabled><option value="">목록을 먼저 불러오세요</option></select></label>
+          <p class="form-hint" id="stream-hint">등록된 카메라의 이름이 표시됩니다.</p>
+          <label class="field-row" for="mode"><span>재생 방식</span><select id="mode" class="field" aria-describedby="mode-hint"><option value="webrtc">WebRTC</option><option value="mse">WebSocket (MSE)</option><option value="hls">HLS</option></select></label>
+          <p class="form-hint" id="mode-hint">WebRTC는 낮은 지연, MSE·HLS는 HTTP/TCP 경로를 사용합니다.</p>
+          <div class="action-bar"><button id="connect" class="primary" type="submit" disabled>연결</button><button id="disconnect" type="button" disabled>연결 해제</button></div>
+          <button id="reconnect" class="reconnect" type="button" disabled>다시 연결</button>
+        </form>
+        <section class="session-info" aria-label="수신 상태">
+          <div class="section-head"><span>RECEIVE STATUS</span><small id="freshness">대기</small></div>
+          <div class="metric-grid">
+            <div><span>수신 프레임</span><strong><span id="frames">—</span><small>frames</small></strong></div>
+            <div><span>수신 데이터</span><strong><span id="bytes">—</span><small>MB</small></strong></div>
+            <div><span>프레임 속도</span><strong><span id="fps">—</span><small>fps</small></strong></div>
+            <div><span>해상도</span><strong id="resolution">—</strong></div>
+          </div>
+          <p class="form-hint">연결 후 실제로 수신한 영상의 상태입니다.</p>
+        </section>
+        <section class="session-info" aria-label="녹화 제어">
+          <div class="section-head"><span>RECORDING CONTROL</span><small id="recording-state" role="status">확인 대기</small></div>
+          <label class="field-row" for="record-camera"><span>녹화할 카메라</span><select id="record-camera" class="field"></select></label>
+          <div class="record-actions" role="group" aria-label="녹화 모드"><button type="button" data-record-mode="on">지금 녹화</button><button type="button" data-record-mode="off">중지</button><button type="button" data-record-mode="auto">자동 / 예약</button></div>
+          <p id="recording-control-hint" class="form-hint" role="status">예약이 없으면 자동 모드는 서버의 기본 녹화 설정을 따릅니다.</p>
+          <details class="schedule-details"><summary>녹화 예약</summary><form id="schedule-form">
+            <label class="field-row" for="schedule-start"><span>시작 시간</span><input id="schedule-start" class="field" type="datetime-local" required></label>
+            <label class="field-row" for="schedule-end"><span>종료 시간</span><input id="schedule-end" class="field" type="datetime-local" required></label>
+            <label class="field-row" for="schedule-repeat"><span>반복</span><select id="schedule-repeat" class="field"><option value="">한 번</option><option value="86400">매일 (24시간마다)</option><option value="604800">매주 (7일마다)</option></select></label>
+            <p class="form-hint" id="schedule-zone"></p><button id="add-schedule" type="submit">예약 추가 · 자동 녹화 적용</button>
+          </form><div id="schedule-list" class="schedule-list"></div></details>
+        </section>
+        <section class="session-info" aria-label="녹화 검색">
+          <div class="section-head"><span>RECORDING ARCHIVE</span><small id="recording-summary">—</small></div>
+          <form id="archive-search"><label class="field-row" for="archive-camera"><span>검색할 카메라</span><select id="archive-camera" class="field"><option value="">모든 카메라</option></select></label>
+          <label class="field-row" for="archive-from"><span>시작 시간</span><input id="archive-from" class="field" type="datetime-local"></label>
+          <label class="field-row" for="archive-to"><span>종료 시간</span><input id="archive-to" class="field" type="datetime-local"></label>
+          <button id="refresh-recordings" type="submit">녹화 검색 / 새로고침</button></form>
+          <div id="recordings" class="recording-list" role="status">카메라와 시간을 선택해 녹화를 검색하세요.</div>
+          <button id="more-recordings" type="button" hidden>다음 녹화 더 보기</button>
+        </section>
+        <p class="panel-footer">LINUX MEDIA SERVICE<span>브라우저의 카메라 권한은 필요하지 않습니다.</span></p>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

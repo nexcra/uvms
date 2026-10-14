@@ -1,0 +1,13 @@
+# Synthetic-camera fixture only, bound to localhost.
+logLevel: warn
+rtsp: true
+rtspAddress: 127.0.0.1:8554
+rtspTransports: [tcp]
+rtmp: false
+hls: false
+webrtc: false
+srt: false
+moq: false
+paths:
+  camera:
+    source: publisher

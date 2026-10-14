@@ -1,0 +1,6 @@
+# Replace with your public DNS name. Caddy manages HTTPS/WSS certificates.
+camera.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
+# WebRTC video uses UDP directly; the HTTPS proxy does not proxy RTP.
+# Forward the configured ICE UDP range to this host and set public_ip.

@@ -1,0 +1,9 @@
+[package]
+name = "unreal-core-port"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Evidence-bound partial port of Unreal v15 frame normalization and MSE message payloads"
+
+[dev-dependencies]
+serde_json = "1"

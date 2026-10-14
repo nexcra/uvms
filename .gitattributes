@@ -1,0 +1,4 @@
+* text=auto eol=lf
+
+# Keep upstream NVIDIA headers byte-for-byte identical to their pinned hashes.
+ports/unreal-nvidia/include/*.h -text -whitespace

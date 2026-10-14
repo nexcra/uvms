@@ -1,0 +1,8 @@
+target
+node_modules
+evidence
+test-results
+.git
+.env
+config.toml
+dist

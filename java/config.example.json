@@ -1,0 +1,16 @@
+{
+  "bind": "127.0.0.1",
+  "port": 8088,
+  "rtsp_port": 8558,
+  "web_root": "/opt/uvms-java/web",
+  "recording_dir": "/var/lib/uvms-java/recordings",
+  "default_stream": "camera_live",
+  "max_sessions": 32,
+  "ice_udp_min": 50200,
+  "ice_udp_workers": 16,
+  "segment_seconds": 10,
+  "recording_limit_bytes": 268435456,
+  "streams": {
+    "camera_live": { "url_env": "REAL_CAMERA_RTSP_URL", "record": false }
+  }
+}

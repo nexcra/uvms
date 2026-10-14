@@ -1,0 +1,14 @@
+{
+  "name": "uvms-browser-verification",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:browser": "node scripts/browser-smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.58.2"
+  },
+  "dependencies": {
+    "hls.js": "1.7.3"
+  }
+}

@@ -1,0 +1,9 @@
+repository = "https://github.com/NVIDIA/VideoProcessingFramework"
+commit = "529fb192f22ec305b8b237ed9e6014e171339c81"
+directory = "src/TC/third_party"
+nvenc_api = "12.0"
+license = "MIT notices retained in each unmodified NVIDIA header"
+[sha256]
+"cuviddec.h" = "a1e0bc2bef87b34e1f7c2bd72de77bd292b1023750de5509e3e09e8e76502102"
+"nvcuvid.h" = "66c20adc88729293491db4cc4b946b315cb3b4a52ec0b5c030ed5a50cfa8575d"
+"nvEncodeAPI.h" = "067c51597e586b72ced8127b2456f48dfe3a9f7d7e0d00dcbb26f9535c05b4ad"

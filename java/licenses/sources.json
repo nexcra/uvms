@@ -1,0 +1,172 @@
+[
+  {
+    "file": "netty/LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/LICENSE.txt",
+    "sha256": "aac73b3148f6d1d7111dbca32099f68d26c644c6813ae1e4f05f6579aa2663fe"
+  },
+  {
+    "file": "netty/NOTICE.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/NOTICE.txt",
+    "sha256": "64e368e79be71463922ebb102b33088667cf975edeed8df7f68efe9f89835ca1"
+  },
+  {
+    "file": "gson/LICENSE",
+    "source": "https://raw.githubusercontent.com/google/gson/gson-parent-2.14.0/LICENSE",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "file": "error-prone/COPYING",
+    "source": "https://raw.githubusercontent.com/google/error-prone/v2.48.0/COPYING",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "file": "netty/license/LICENSE.bouncycastle.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.bouncycastle.txt",
+    "sha256": "3ad769df48f54692f561debc1be6134efb95b63b6e5031b8167f821bd82a204f"
+  },
+  {
+    "file": "netty/license/LICENSE.harmony.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.harmony.txt",
+    "sha256": "3e4af21da9cb8a50d6a8f32225d7630fbf94a263e89945489d4863585f4aca4e"
+  },
+  {
+    "file": "netty/license/LICENSE.nghttp2-hpack.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.nghttp2-hpack.txt",
+    "sha256": "6b94f3abc1aabd0c72a7c7d92a77f79dda7c8a0cb3df839a97890b4116a2de2a"
+  },
+  {
+    "file": "netty/license/LICENSE.compress-lzf.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.compress-lzf.txt",
+    "sha256": "95eab05f6010cc64dedb668523c01fc9f48665cded448de86404b14a7a557ddd"
+  },
+  {
+    "file": "netty/license/LICENSE.brotli4j.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.brotli4j.txt",
+    "sha256": "c1b9df1275e769f3dbab000d1e457a2d4b0f28eb5da6c77e48dc37eeba202ed7"
+  },
+  {
+    "file": "netty/license/LICENSE.jsr166y.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.jsr166y.txt",
+    "sha256": "17869cb6184447de9663a752a7663c118a9ed0d4ce0a2208986afc75206e1bbb"
+  },
+  {
+    "file": "netty/license/LICENSE.log4j.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.log4j.txt",
+    "sha256": "3e4af21da9cb8a50d6a8f32225d7630fbf94a263e89945489d4863585f4aca4e"
+  },
+  {
+    "file": "netty/license/LICENSE.hpack.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.hpack.txt",
+    "sha256": "62fb8a3a9621dc2388174caaabe9c2317b694bb9a1d46c98bcf5655b68f51be3"
+  },
+  {
+    "file": "netty/license/LICENSE.zstd-jni.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.zstd-jni.txt",
+    "sha256": "101b8b218e3784b326bcbf7fb4a6b0138f63e8df53242d9b10eb80a0056a1133"
+  },
+  {
+    "file": "netty/license/LICENSE.webbit.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.webbit.txt",
+    "sha256": "9a746c7a218e6ee1ef719a39a0a66454c82ada93c60f06f9f819b505f6401046"
+  },
+  {
+    "file": "netty/license/LICENSE.mvn-wrapper.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.mvn-wrapper.txt",
+    "sha256": "aac73b3148f6d1d7111dbca32099f68d26c644c6813ae1e4f05f6579aa2663fe"
+  },
+  {
+    "file": "netty/license/NOTICE.harmony.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/NOTICE.harmony.txt",
+    "sha256": "9cea0d3fe0550735946cec78eaf6cfccce153ae06bdcdf17fa3b9f8d9b22196a"
+  },
+  {
+    "file": "netty/license/LICENSE.jctools.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.jctools.txt",
+    "sha256": "3e4af21da9cb8a50d6a8f32225d7630fbf94a263e89945489d4863585f4aca4e"
+  },
+  {
+    "file": "netty/license/LICENSE.jbzip2.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.jbzip2.txt",
+    "sha256": "77edfb9953d4a58f573c40280f9703df301b1f28e68b556914a561b03559c5e9"
+  },
+  {
+    "file": "netty/license/LICENSE.commons-lang.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.commons-lang.txt",
+    "sha256": "3e4af21da9cb8a50d6a8f32225d7630fbf94a263e89945489d4863585f4aca4e"
+  },
+  {
+    "file": "netty/license/LICENSE.jboss-marshalling.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.jboss-marshalling.txt",
+    "sha256": "ff420781e0005270cd1894a265e526dec4eb332f99df62a481b06672db202290"
+  },
+  {
+    "file": "netty/license/LICENSE.jzlib.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.jzlib.txt",
+    "sha256": "2ce9cdc96c015e5bb03fb1b565f33ffc7590c35ff2a33abe923e299135c01ce1"
+  },
+  {
+    "file": "netty/license/LICENSE.slf4j.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.slf4j.txt",
+    "sha256": "e45deaad2824e38410545e2ed8ced91eccd13bc03b41643a4bd79c96e106e106"
+  },
+  {
+    "file": "netty/license/LICENSE.protobuf.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.protobuf.txt",
+    "sha256": "8fa16eae6ec99dfa982ab552ecbf9e98421bf5062356538cac4cd0c7bacd0093"
+  },
+  {
+    "file": "netty/license/LICENSE.hyper-hpack.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.hyper-hpack.txt",
+    "sha256": "763a9342a04df62046c9dc748a5287934eb0a5331c6863b3ca0aee20e18cb4ed"
+  },
+  {
+    "file": "netty/license/LICENSE.lz4.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.lz4.txt",
+    "sha256": "aac73b3148f6d1d7111dbca32099f68d26c644c6813ae1e4f05f6579aa2663fe"
+  },
+  {
+    "file": "netty/license/LICENSE.caliper.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.caliper.txt",
+    "sha256": "aac73b3148f6d1d7111dbca32099f68d26c644c6813ae1e4f05f6579aa2663fe"
+  },
+  {
+    "file": "netty/license/LICENSE.dnsinfo.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.dnsinfo.txt",
+    "sha256": "f0bdf5682bf317b1f85c80ed32cb4c7bf77b5a231dee485aa92d983673b7c58f"
+  },
+  {
+    "file": "netty/license/LICENSE.lzma-java.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.lzma-java.txt",
+    "sha256": "aac73b3148f6d1d7111dbca32099f68d26c644c6813ae1e4f05f6579aa2663fe"
+  },
+  {
+    "file": "netty/license/LICENSE.snappy.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.snappy.txt",
+    "sha256": "38139f9e51ce002fccec3b6cf2011a24e18e5096b8e6ad715f718828fa0b57d1"
+  },
+  {
+    "file": "netty/license/LICENSE.base64.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.base64.txt",
+    "sha256": "922754f715103e9366d1099f85bfea7df192d3d457cd7e222786321c9ab01954"
+  },
+  {
+    "file": "netty/license/LICENSE.aalto-xml.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.aalto-xml.txt",
+    "sha256": "2dca650805d8e96b8fcd3c2ac8bd17a8813fee479caefce929c75528710f35df"
+  },
+  {
+    "file": "netty/license/LICENSE.commons-logging.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.commons-logging.txt",
+    "sha256": "3e4af21da9cb8a50d6a8f32225d7630fbf94a263e89945489d4863585f4aca4e"
+  },
+  {
+    "file": "netty/license/LICENSE.jfastlz.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.jfastlz.txt",
+    "sha256": "06c1bf4cd5304c64bb72a6e03b461c389c35af26d623e3add7d828c398482e1d"
+  },
+  {
+    "file": "netty/license/LICENSE.libdivsufsort.txt",
+    "source": "https://raw.githubusercontent.com/netty/netty/netty-4.1.137.Final/license/LICENSE.libdivsufsort.txt",
+    "sha256": "a801f489b279d91b8afc67d41e3769ec4df476fda218d63f4326c005db881541"
+  }
+]

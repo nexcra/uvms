@@ -1,0 +1,27 @@
+bind = "127.0.0.1:8080"
+default_stream = "camera"
+rtsp_bind = "127.0.0.1:8555"
+web_root = "web"
+max_sessions = 32
+# All WebRTC viewers share ice_udp_min. Use a distinct port for each service.
+ice_udp_min = 50000
+# Accepted for compatibility; no longer used to allocate per-viewer ports.
+ice_udp_max = 50100
+# public_ip = "192.168.1.10"
+# ice_servers = ["stun:your-stun.example:3478"]
+recording_dir = "/var/lib/uvms/recordings"
+segment_seconds = 60
+recording_limit_bytes = 10737418240
+# HLS uses an independent RAM ring; finished MP4 recordings are never evicted.
+# Camera IDR interval must fit this segment target. Increase for longer GOPs.
+hls_segment_seconds = 2
+hls_window_seconds = 300
+hls_limit_bytes = 134217728
+# H264 stays compressed passthrough. H265 uses one shared NVIDIA transcoder per alias.
+# Requires a --features nvidia build and an HEVC-decode/H264-encode capable GPU.
+nvidia_device = 0
+nvidia_bitrate = 4000000
+
+[streams.camera]
+url_env = "CAMERA_RTSP_URL"
+record = true

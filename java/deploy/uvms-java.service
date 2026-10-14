@@ -1,0 +1,22 @@
+[Unit]
+Description=UVMS Java media service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=uvms
+Group=uvms
+EnvironmentFile=/etc/uvms-java/uvms.env
+Environment=UVMS_JAVA_CONFIG=/etc/uvms-java/config.json
+ExecStart=/usr/bin/java -Djava.net.preferIPv4Stack=true -Xms64m -Xmx512m -jar /opt/uvms-java/uvms-java.jar
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=2
+StateDirectory=uvms-java
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+InaccessiblePaths=-/usr/bin/ffmpeg -/usr/bin/ffprobe
+
+[Install]
+WantedBy=multi-user.target
