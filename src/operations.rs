@@ -213,7 +213,7 @@ pub async fn snapshot(app: &App) -> serde_json::Value {
         cameras.push(json!({"id":id,"input_active":online,"recording_requested":active,"recording":state,"recording_ok":recording_ok}));
     }
     json!({"status":if healthy{"ok"}else{"degraded"},"version":env!("CARGO_PKG_VERSION"),"database_readable":database_ok,
-        "storage":{"used_bytes":app.recordings.used_bytes(),"limit_bytes":app.config.recording_limit_bytes,"filesystem_available_bytes":available,"unfinished_files_at_startup":app.recordings.unfinished_files()},
+        "storage":{"used_bytes":app.recordings.used_bytes(),"limit_bytes":app.recordings.limit_bytes(),"filesystem_available_bytes":available,"unfinished_files_at_startup":app.recordings.unfinished_files()},
         "journal":{"write_failed":app.events.0.failed.load(Ordering::Relaxed),"lost_events":app.events.0.lost.load(Ordering::Relaxed),"retention_events":RETAIN},
         "sessions":{"occupied_slots":app.config.max_sessions.saturating_sub(app.slots.available_permits()),"limit":app.config.max_sessions},"cameras":cameras})
 }

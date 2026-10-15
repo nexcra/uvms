@@ -18,7 +18,7 @@ use std::{
     path::PathBuf,
     sync::{
         atomic::{AtomicU64, Ordering},
-        Arc,
+        Arc, Mutex as StdMutex,
     },
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
@@ -27,13 +27,32 @@ use tokio::{
     sync::{watch, Mutex},
 };
 use unreal_mp4::Muxer;
-#[derive(Default)]
 pub struct Status {
     states: Mutex<HashMap<String, String>>,
-    used: AtomicU64,
+    budget: StdMutex<Budget>,
+    budget_changed: watch::Sender<u64>,
+    storage_lock: Mutex<()>,
     unfinished: AtomicU64,
     controls: Mutex<HashMap<String, watch::Sender<Control>>>,
     control_locks: Mutex<HashMap<String, Arc<Mutex<()>>>>,
+}
+#[derive(Default)]
+struct Budget {
+    used: u64,
+    limit: u64,
+}
+impl Default for Status {
+    fn default() -> Self {
+        Self {
+            states: Mutex::default(),
+            budget: StdMutex::default(),
+            budget_changed: watch::channel(0).0,
+            storage_lock: Mutex::new(()),
+            unfinished: AtomicU64::default(),
+            controls: Mutex::default(),
+            control_locks: Mutex::default(),
+        }
+    }
 }
 #[derive(Debug)]
 struct StorageFull;
@@ -53,7 +72,14 @@ impl Status {
             .unwrap_or_else(|| "off".into())
     }
     pub fn used_bytes(&self) -> u64 {
-        self.used.load(Ordering::SeqCst)
+        self.budget.lock().unwrap().used
+    }
+    pub fn limit_bytes(&self) -> u64 {
+        self.budget.lock().unwrap().limit
+    }
+    fn set_limit(&self, limit: u64) {
+        self.budget.lock().unwrap().limit = limit;
+        self.budget_changed.send_replace(limit);
     }
     pub fn unfinished_files(&self) -> u64 {
         self.unfinished.load(Ordering::Relaxed)
@@ -71,16 +97,17 @@ impl Status {
             events.emit(Some(id), "recording", s);
         }
     }
-    fn reserve(&self, n: u64, limit: u64) -> Result<()> {
-        self.used
-            .try_update(Ordering::SeqCst, Ordering::SeqCst, |v| {
-                v.checked_add(n).filter(|sum| *sum <= limit)
-            })
-            .map_err(|_| StorageFull)?;
+    fn reserve(&self, n: u64) -> Result<()> {
+        let mut budget = self.budget.lock().unwrap();
+        budget.used = budget
+            .used
+            .checked_add(n)
+            .filter(|used| *used <= budget.limit)
+            .ok_or(StorageFull)?;
         Ok(())
     }
     fn release(&self, n: u64) {
-        self.used.fetch_sub(n, Ordering::SeqCst);
+        self.budget.lock().unwrap().used -= n;
     }
 }
 pub async fn start(app: Arc<App>) -> Result<Vec<tokio::task::JoinHandle<()>>> {
@@ -132,7 +159,13 @@ pub async fn start(app: Arc<App>) -> Result<Vec<tokio::task::JoinHandle<()>>> {
             }
         }
     }
-    app.recordings.used.store(used, Ordering::SeqCst);
+    app.recordings.budget.lock().unwrap().used = used;
+    let limit = app
+        .archive
+        .storage_limit()
+        .await?
+        .unwrap_or(app.config.recording_limit_bytes);
+    app.recordings.set_limit(limit);
     let mut tasks = vec![];
     for (id, s) in &app.config.streams {
         let default = s.record;
@@ -148,6 +181,7 @@ pub async fn start(app: Arc<App>) -> Result<Vec<tokio::task::JoinHandle<()>>> {
         if !tokio::fs::symlink_metadata(&dir).await?.is_dir() {
             bail!("recording camera directory must not be a symlink")
         }
+        let mut budget_changed = app.recordings.budget_changed.subscribe();
         let app = app.clone();
         let id = id.clone();
         tasks.push(tokio::spawn(async move {
@@ -159,13 +193,23 @@ pub async fn start(app: Arc<App>) -> Result<Vec<tokio::task::JoinHandle<()>>> {
                     tokio::select!{_=app.shutdown.cancelled()=>break,_=control.changed()=>{},_=tokio::time::sleep(Duration::from_millis(250))=>{}}
                     continue;
                 }
+                budget_changed.borrow_and_update();
                 app.recordings.set(&id,"connecting", &app.events).await;
                 let outcome=record_source(&app,&id,&dir,&mut control,default).await;
                 if app.shutdown.is_cancelled(){app.recordings.set(&id,"stopped", &app.events).await;break}
                 if outcome.as_ref().is_err_and(|e|e.is::<StorageFull>()) {
                     app.recordings.set(&id,"storage_full", &app.events).await;
                     tracing::warn!(stream=%id,"Recording budget reached; existing files preserved");
-                    tokio::select!{_=app.shutdown.cancelled()=>break,_=control.changed()=>{}}
+                    loop {
+                        tokio::select! {
+                            _=app.shutdown.cancelled()=>break,
+                            _=control.changed()=>break,
+                            _=budget_changed.changed()=>break,
+                            _=tokio::time::sleep(Duration::from_millis(250))=>{
+                                if !control.borrow().active(default,now_ms()) {break}
+                            }
+                        }
+                    }
                     continue;
                 }
                 if let Err(error)=&outcome{app.recordings.set(&id,"retrying", &app.events).await;let backlog=error.downcast_ref::<tokio::sync::broadcast::error::RecvError>().map(|e|e.to_string());tracing::warn!(stream=%id,backlog,"Recording interrupted; check source and storage");}
@@ -368,8 +412,7 @@ async fn record_source(
                                 .saturating_mul(audio.as_ref().unwrap().clock_rate as u64)
                                 / 90000;
                             let b = s.mux.audio_fragment(&a.data, timestamp, a.duration)?;
-                            app.recordings
-                                .reserve(b.len() as u64, app.config.recording_limit_bytes)?;
+                            app.recordings.reserve(b.len() as u64)?;
                             if let Err(e) = s.file.write_all(&b).await {
                                 release_unwritten(
                                     &mut s.file,
@@ -420,8 +463,7 @@ async fn record_source(
                 let stem = format!("{timestamp}-{}", uuid::Uuid::new_v4().simple());
                 let partial = dir.join(format!("{stem}.partial"));
                 let final_path = dir.join(format!("{stem}.mp4"));
-                app.recordings
-                    .reserve(reserved, app.config.recording_limit_bytes)?;
+                app.recordings.reserve(reserved)?;
                 let mut file = match tokio::fs::OpenOptions::new()
                     .write(true)
                     .create_new(true)
@@ -464,8 +506,7 @@ async fn record_source(
                 f.duration_90k,
                 f.keyframe,
             )?;
-            app.recordings
-                .reserve(b.len() as u64, app.config.recording_limit_bytes)?;
+            app.recordings.reserve(b.len() as u64)?;
             // On disk failure retain .partial; a partial trailing box must not be published.
             if let Err(e) = s.file.write_all(&b).await {
                 release_unwritten(&mut s.file, s.written, b.len() as u64, &app.recordings).await;
@@ -529,7 +570,7 @@ pub async fn list(State(app): State<Arc<App>>, Query(q): Query<Search>) -> Respo
                 }
                 files.push(json!({"url":format!("/api/recordings/{}/{}",c.stream,c.file),"stream":c.stream,"file":c.file,"start_ms":c.start_ms,"end_ms":c.end_ms,"bytes":c.bytes,"estimated":c.estimated}));
             }
-            Json(json!({"files":files,"used_bytes":app.recordings.used.load(Ordering::SeqCst),"limit_bytes":app.config.recording_limit_bytes})).into_response()
+            Json(json!({"files":files,"used_bytes":app.recordings.used_bytes(),"limit_bytes":app.recordings.limit_bytes()})).into_response()
         }
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
@@ -542,6 +583,61 @@ pub async fn control_status(State(app): State<Arc<App>>, Path(id): Path<String>)
         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
     };
     Json(json!({"mode":c.mode,"schedules":c.schedules,"active":c.active(stream.record,now_ms()),"status":app.recordings.get(&id).await})).into_response()
+}
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StorageUpdate {
+    limit_bytes: u64,
+}
+pub async fn storage_status(State(app): State<Arc<App>>) -> Response {
+    let (used, limit) = {
+        let b = app.recordings.budget.lock().unwrap();
+        (b.used, b.limit)
+    };
+    Json(
+        json!({"used_bytes":used,"limit_bytes":limit,"remaining_bytes":limit.saturating_sub(used),
+        "configured_limit_bytes":app.config.recording_limit_bytes,"automatic_deletion":false,
+        "restart_required":false}),
+    )
+    .into_response()
+}
+pub async fn storage_update(
+    State(app): State<Arc<App>>,
+    headers: HeaderMap,
+    Json(update): Json<StorageUpdate>,
+) -> Response {
+    if !crate::same_origin(&headers) {
+        return StatusCode::FORBIDDEN.into_response();
+    }
+    if !(1024 * 1024..=i64::MAX as u64).contains(&update.limit_bytes) {
+        return (
+            StatusCode::BAD_REQUEST,
+            "limit_bytes must be between 1 MiB and i64::MAX",
+        )
+            .into_response();
+    }
+    // Complete the persist/apply operation even if the HTTP caller disconnects.
+    // Only settings operations hold this async lock; sample writers never do.
+    let target = app.clone();
+    let result = tokio::spawn(async move {
+        let _guard = target.recordings.storage_lock.lock().await;
+        target
+            .archive
+            .save_storage_limit(update.limit_bytes)
+            .await?;
+        target.recordings.set_limit(update.limit_bytes);
+        target.events.emit(
+            None,
+            "storage",
+            &format!("limit_bytes={}", update.limit_bytes),
+        );
+        Ok::<_, anyhow::Error>(())
+    })
+    .await;
+    match result {
+        Ok(Ok(())) => storage_status(State(app)).await,
+        _ => StatusCode::SERVICE_UNAVAILABLE.into_response(),
+    }
 }
 pub async fn control(
     State(app): State<Arc<App>>,
@@ -697,6 +793,107 @@ fn byte_range(value: &str, size: u64) -> Result<(u64, u64)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn concurrent_reservations_and_lowering_the_limit_preserve_accounting() {
+        let state = Status::default();
+        state.set_limit(1000);
+        std::thread::scope(|scope| {
+            for _ in 0..16 {
+                let state = &state;
+                scope.spawn(move || {
+                    for _ in 0..1000 {
+                        let _ = state.reserve(1);
+                    }
+                });
+            }
+        });
+        assert_eq!(state.used_bytes(), 1000);
+        state.set_limit(500);
+        assert!(state.reserve(1).is_err());
+        assert_eq!(state.used_bytes(), 1000);
+        state.release(600);
+        state.reserve(100).unwrap();
+        assert!(state.reserve(1).is_err());
+        state.set_limit(2000);
+        state.reserve(1500).unwrap();
+        assert_eq!(state.used_bytes(), 2000);
+    }
+    #[tokio::test]
+    async fn storage_updates_persist_validate_and_do_not_apply_failed_writes() {
+        let root = std::env::temp_dir().join(format!("uvms-storage-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir(&root).unwrap();
+        let app = crate::tests::app();
+        app.archive
+            .initialize(root.to_str().unwrap())
+            .await
+            .unwrap();
+        app.recordings.set_limit(1024 * 1024);
+        assert_eq!(app.archive.storage_limit().await.unwrap(), None);
+        let response = storage_update(
+            State(app.clone()),
+            HeaderMap::new(),
+            Json(StorageUpdate {
+                limit_bytes: 2 * 1024 * 1024,
+            }),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(app.recordings.limit_bytes(), 2 * 1024 * 1024);
+        let reopened = crate::archive::Archive::default();
+        reopened.initialize(root.to_str().unwrap()).await.unwrap();
+        assert_eq!(
+            reopened.storage_limit().await.unwrap(),
+            Some(2 * 1024 * 1024)
+        );
+        for limit in [0, 1024 * 1024 - 1, u64::MAX] {
+            assert_eq!(
+                storage_update(
+                    State(app.clone()),
+                    HeaderMap::new(),
+                    Json(StorageUpdate { limit_bytes: limit })
+                )
+                .await
+                .status(),
+                StatusCode::BAD_REQUEST
+            );
+        }
+        let mut headers = HeaderMap::new();
+        headers.insert(header::HOST, "media.lan".parse().unwrap());
+        headers.insert(header::ORIGIN, "http://another.lan".parse().unwrap());
+        assert_eq!(
+            storage_update(
+                State(app.clone()),
+                headers,
+                Json(StorageUpdate {
+                    limit_bytes: 3 * 1024 * 1024
+                })
+            )
+            .await
+            .status(),
+            StatusCode::FORBIDDEN
+        );
+        app.archive
+            .run(|db| {
+                db.execute("DROP TABLE settings", [])?;
+                Ok(())
+            })
+            .await
+            .unwrap();
+        assert_eq!(
+            storage_update(
+                State(app.clone()),
+                HeaderMap::new(),
+                Json(StorageUpdate {
+                    limit_bytes: 3 * 1024 * 1024
+                })
+            )
+            .await
+            .status(),
+            StatusCode::SERVICE_UNAVAILABLE
+        );
+        assert_eq!(app.recordings.limit_bytes(), 2 * 1024 * 1024);
+        std::fs::remove_dir_all(root).unwrap();
+    }
     #[tokio::test]
     async fn legacy_clip_duration_comes_from_media_not_current_segment_setting() {
         let path = std::env::temp_dir().join(format!("uvms-duration-{}.mp4", uuid::Uuid::new_v4()));
@@ -737,11 +934,12 @@ mod tests {
     #[test]
     fn recording_budget_cannot_overflow_or_overcommit() {
         let state = Status::default();
-        state.reserve(9, 10).unwrap();
-        assert!(state.reserve(2, 10).is_err());
-        assert_eq!(state.used.load(Ordering::SeqCst), 9);
-        assert!(state.reserve(u64::MAX, 10).is_err());
-        assert!(state.reserve(2, 10).unwrap_err().is::<StorageFull>());
+        state.set_limit(10);
+        state.reserve(9).unwrap();
+        assert!(state.reserve(2).is_err());
+        assert_eq!(state.used_bytes(), 9);
+        assert!(state.reserve(u64::MAX).is_err());
+        assert!(state.reserve(2).unwrap_err().is::<StorageFull>());
     }
     #[tokio::test]
     async fn failed_append_releases_only_bytes_absent_from_partial_file() {
@@ -754,13 +952,14 @@ mod tests {
             .await
             .unwrap();
         let state = Status::default();
-        state.reserve(5, 100).unwrap();
+        state.set_limit(100);
+        state.reserve(5).unwrap();
         file.write_all(&[0; 5]).await.unwrap();
-        state.reserve(10, 100).unwrap();
+        state.reserve(10).unwrap();
         // Model a failed ten-byte append that leaves three bytes on disk.
         file.write_all(&[1; 3]).await.unwrap();
         release_unwritten(&mut file, 5, 10, &state).await;
-        assert_eq!(state.used.load(Ordering::SeqCst), 8);
+        assert_eq!(state.used_bytes(), 8);
         assert_eq!(file.metadata().await.unwrap().len(), 8);
         drop(file);
         tokio::fs::remove_file(path).await.unwrap();

@@ -86,7 +86,7 @@ impl Archive {
     pub async fn initialize(&self, root: &str) -> Result<()> {
         let path = PathBuf::from(root).join("archive.sqlite");
         self.path.set(path).ok();
-        self.run(|db| { db.execute_batch("PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS clips(stream TEXT NOT NULL,file TEXT NOT NULL,start_ms INTEGER NOT NULL,end_ms INTEGER NOT NULL,bytes INTEGER NOT NULL,estimated INTEGER NOT NULL,PRIMARY KEY(stream,file)); CREATE INDEX IF NOT EXISTS clips_time ON clips(stream,start_ms,end_ms); CREATE TABLE IF NOT EXISTS controls(stream TEXT PRIMARY KEY,json TEXT NOT NULL);")?; Ok(()) }).await
+        self.run(|db| { db.execute_batch("PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS clips(stream TEXT NOT NULL,file TEXT NOT NULL,start_ms INTEGER NOT NULL,end_ms INTEGER NOT NULL,bytes INTEGER NOT NULL,estimated INTEGER NOT NULL,PRIMARY KEY(stream,file)); CREATE INDEX IF NOT EXISTS clips_time ON clips(stream,start_ms,end_ms); CREATE TABLE IF NOT EXISTS controls(stream TEXT PRIMARY KEY,json TEXT NOT NULL); CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value INTEGER NOT NULL);")?; Ok(()) }).await
     }
     pub(crate) async fn run<T: Send + 'static>(
         &self,
@@ -124,6 +124,34 @@ impl Archive {
             "archive metadata exceeds supported range"
         );
         self.run(move|db| { db.execute("INSERT INTO clips VALUES(?1,?2,?3,?4,?5,?6) ON CONFLICT(stream,file) DO UPDATE SET start_ms=excluded.start_ms,end_ms=excluded.end_ms,bytes=excluded.bytes,estimated=excluded.estimated WHERE clips.estimated=1",params![c.stream,c.file,c.start_ms as i64,c.end_ms as i64,c.bytes as i64,c.estimated])?; Ok(()) }).await
+    }
+    pub async fn storage_limit(&self) -> Result<Option<u64>> {
+        let limit = self
+            .read(|db| {
+                use rusqlite::OptionalExtension;
+                Ok(db
+                    .query_row(
+                        "SELECT value FROM settings WHERE key='recording_limit_bytes'",
+                        [],
+                        |r| r.get::<_, i64>(0),
+                    )
+                    .optional()?)
+            })
+            .await?;
+        if let Some(value) = limit {
+            ensure!(value >= 1024 * 1024, "invalid persisted storage limit");
+        }
+        Ok(limit.map(|v| v as u64))
+    }
+    pub async fn save_storage_limit(&self, limit: u64) -> Result<()> {
+        ensure!(
+            (1024 * 1024..=i64::MAX as u64).contains(&limit),
+            "invalid storage limit"
+        );
+        self.run(move |db| {
+            db.execute("INSERT INTO settings(key,value) VALUES('recording_limit_bytes',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",[limit as i64])?;
+            Ok(())
+        }).await
     }
     /// Completed append-only recordings already have exact metadata. Their
     /// contents need not be reparsed on every startup; still check disk size.

@@ -1,5 +1,8 @@
 # UVMS Rust Linux media service
 
+v0.5.1은 [실행 중 녹화 한도 변경·자동 재개](docs/storage-control.md)를 추가한다.
+수동 중지와 예약은 유지하고, 기존 영상은 삭제하지 않는다.
+
 v0.5.0은 장애·복구 이력(`/api/events`), 운영 상태(`/api/status`, `/readyz`),
 녹화 구간·공백(`/api/timeline/{stream}`) API와 미완료 녹화 감지를 추가한다.
 현재 지원 범위·남은 VMS 기능·API 사용법은 [엔진 점검표](docs/vms-engine-audit-2026-10-15.md)에 있다.

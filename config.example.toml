@@ -11,6 +11,7 @@ ice_udp_max = 50100
 # ice_servers = ["stun:your-stun.example:3478"]
 recording_dir = "/var/lib/uvms/recordings"
 segment_seconds = 60
+# Default budget. PUT /api/storage stores a persistent override in archive.sqlite.
 recording_limit_bytes = 10737418240
 # HLS uses an independent RAM ring; finished MP4 recordings are never evicted.
 # Camera IDR interval must fit this segment target. Increase for longer GOPs.

@@ -98,6 +98,7 @@ fn router(app: Arc<App>) -> Router {
         .route("/healthz",get(||async{Json(json!({"status":"ok","version":env!("CARGO_PKG_VERSION"),"media_engine":"rust-native"}))}))
         .route("/readyz",get(operations::ready))
         .route("/api/status",get(operations::status))
+        .route("/api/storage",get(record::storage_status).put(record::storage_update))
         .route("/api/events",get(operations::events))
         .route("/api/timeline/{stream}",get(timeline::get))
         .route("/api/streams",get(streams))

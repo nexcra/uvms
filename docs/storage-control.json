@@ -1,0 +1,141 @@
+{
+  "version": "0.5.1",
+  "unit_tests": {
+    "passed": 41,
+    "failed": 0,
+    "ignored_benchmark": 1,
+    "clippy_warnings": 0
+  },
+  "integration": {
+    "passed": true,
+    "fixture": {
+      "run": "1792056532950229772",
+      "recording_dir": "/var/lib/uvms-soak/recordings-1792056532950229772",
+      "binary_sha256": "6a7944c86e6225c6afb41f63be1525c21bde31e7232813ff157e22d6a91af7c2",
+      "binary_bytes": 18466872,
+      "aliases": [
+        "aac",
+        "pcmu",
+        "pcma",
+        "opus"
+      ],
+      "http": 8099,
+      "source_proxy_port": 18576
+    },
+    "resume_seconds": 0.83,
+    "schedule_expires_while_storage_full": true,
+    "manual_off_and_expired_schedule_preserved": true,
+    "same_process_during_limit_changes": true,
+    "limit_and_recording_intent_persisted": true,
+    "existing_recordings_preserved": 4,
+    "completed_recordings": 12,
+    "final_storage": {
+      "automatic_deletion": false,
+      "configured_limit_bytes": 8589934592,
+      "limit_bytes": 33554432,
+      "remaining_bytes": 23514245,
+      "restart_required": false,
+      "used_bytes": 10040187
+    },
+    "storage_events": [
+      {
+        "id": 6,
+        "kind": "storage",
+        "state": "limit_bytes=4194304",
+        "stream": null,
+        "time_ms": 1792056535781
+      },
+      {
+        "id": 31,
+        "kind": "storage",
+        "state": "limit_bytes=16777216",
+        "stream": null,
+        "time_ms": 1792056542493
+      },
+      {
+        "id": 43,
+        "kind": "storage",
+        "state": "limit_bytes=1048576",
+        "stream": null,
+        "time_ms": 1792056548419
+      },
+      {
+        "id": 54,
+        "kind": "storage",
+        "state": "limit_bytes=33554432",
+        "stream": null,
+        "time_ms": 1792056553484
+      }
+    ],
+    "elapsed_seconds": 31.004
+  },
+  "media_validation": {
+    "completed_clips": 12,
+    "video": "H264",
+    "audio": "AAC",
+    "all_frames_decoded": true
+  },
+  "deployment": {
+    "passed": true,
+    "health": {
+      "media_engine": "rust-native",
+      "status": "ok",
+      "version": "0.5.1"
+    },
+    "configuration_preserved": true,
+    "existing_recordings_preserved": 225,
+    "binary_before_sha256": "be83d36db966f7721a469ce0804c87f7066ecd383d67e01c990ea072a9329312",
+    "binary_sha256": "6a7944c86e6225c6afb41f63be1525c21bde31e7232813ff157e22d6a91af7c2",
+    "binary_bytes": 18466872,
+    "backup": "/var/backups/uvms/rust-update-1792056638648300622"
+  },
+  "live_resume": {
+    "passed": true,
+    "old_limit_bytes": 268435456,
+    "limit_bytes": 10737418240,
+    "pid_unchanged": true,
+    "ready_http": 200,
+    "cameras": [
+      {
+        "id": "camera",
+        "input_active": true,
+        "recording": "recording",
+        "recording_ok": true,
+        "recording_requested": true
+      },
+      {
+        "id": "camera_copy",
+        "input_active": false,
+        "recording": "off",
+        "recording_ok": true,
+        "recording_requested": false
+      },
+      {
+        "id": "camera_live",
+        "input_active": false,
+        "recording": "off",
+        "recording_ok": true,
+        "recording_requested": false
+      },
+      {
+        "id": "camera_two",
+        "input_active": true,
+        "recording": "recording",
+        "recording_ok": true,
+        "recording_requested": true
+      }
+    ],
+    "storage": {
+      "filesystem_available_bytes": 992722989056,
+      "limit_bytes": 10737418240,
+      "unfinished_files_at_startup": 0,
+      "used_bytes": 268512472
+    }
+  },
+  "limits": [
+    "Focused storage-control test; not a new long-duration soak",
+    "No automatic deletion or per-camera fair allocation",
+    "Very short first-IDR-only clips may contain no audio yet",
+    "External file removal requires restart to recount usage"
+  ]
+}
