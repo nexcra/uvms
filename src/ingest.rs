@@ -274,6 +274,7 @@ mod tests {
             config::StreamConfig {
                 url_env: url_var.clone(),
                 record: false,
+                ..Default::default()
             },
         );
         config.streams.insert(
@@ -281,6 +282,7 @@ mod tests {
             config::StreamConfig {
                 url_env: format!("{url_var}_MISSING"),
                 record: false,
+                ..Default::default()
             },
         );
         let config = Arc::new(config);

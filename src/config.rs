@@ -57,6 +57,9 @@ impl Default for Config {
 pub struct StreamConfig {
     pub url_env: String,
     pub record: bool,
+    pub onvif_url: Option<String>,
+    pub onvif_username_env: Option<String>,
+    pub onvif_password_env: Option<String>,
 }
 impl Config {
     pub fn validate(&self) -> Result<()> {

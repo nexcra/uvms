@@ -117,6 +117,7 @@ async function loadStreams() {
       ui["stream-hint"].textContent = `${ui.stream.options.length}개 카메라 · 재생할 카메라를 선택하세요.`;
     }
     populateSurveillanceCameras();
+    populateOnvifCameras();
     return true;
   } catch (error) {
     if (listRequest === request) showError(error.name === "AbortError" ? "목록 요청 시간이 초과됐습니다. 서버 연결을 확인하세요." : error.message);
@@ -953,3 +954,116 @@ class CameraPlayer {
 
 // Load and play the configured camera on arrival.
 loadStreams().then(ready => { if (ready && ui.stream.value) connect(); });
+
+// ONVIF control is independent of media playback; remote names are text only.
+const onvif = Object.fromEntries(["camera", "url", "profile", "state", "hint", "inspect", "discover", "interface", "devices", "device-info"].map(name => [name, byId("onvif-" + name)]));
+let onvifGeneration = 0, onvifOptions = null, onvifBusy = false, activePtz = null;
+function onvifMessage(message, state = "idle") {
+  onvif.hint.textContent = message;
+  onvif.state.textContent = state === "live" ? "준비됨" : state === "error" ? "확인 필요" : "대기";
+  onvif.state.dataset.state = state;
+}
+async function onvifRequest(path, body) {
+  const response = await fetch(path, {method: body === undefined ? "GET" : "POST", headers: {"Content-Type": "application/json"}, body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(30000)});
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || `요청 실패 (HTTP ${response.status})`);
+  return data;
+}
+function onvifButtons() {
+  onvif.camera.disabled = Boolean(activePtz);
+  onvif.profile.disabled = onvifBusy || Boolean(activePtz) || !onvif.profile.options.length;
+  onvif.inspect.disabled = onvifBusy || Boolean(activePtz) || !onvif.camera.value;
+  for (const button of document.querySelectorAll("[data-ptz]")) {
+    const supported = button.dataset.ptz.startsWith("zoom") ? onvifOptions?.zoom : onvifOptions?.pan_tilt;
+    button.disabled = onvifBusy || Boolean(activePtz) || !supported;
+  }
+  byId("ptz-stop").disabled = !(onvifOptions?.pan_tilt || onvifOptions?.zoom || activePtz);
+}
+function populateOnvifCameras() {
+  const previous = onvif.camera.value;
+  onvif.camera.replaceChildren(...cameras.map(camera => new Option(camera.id, camera.id)));
+  onvif.camera.value = cameras.some(camera => camera.id === previous) ? previous : ui.stream.value;
+  if (onvif.camera.value !== previous) selectOnvifCamera();
+  onvifButtons();
+}
+async function selectOnvifCamera() {
+  const generation = ++onvifGeneration;
+  onvifOptions = null; onvifBusy = false; onvif.profile.replaceChildren(); onvif.url.value = "";
+  onvif["device-info"].textContent = "등록된 카메라 계정을 사용합니다.";
+  onvifMessage("카메라 기능 확인을 눌러 프로파일과 PTZ 지원 여부를 조회하세요."); onvifButtons();
+  if (!onvif.camera.value) return;
+  try {
+    const data = await onvifRequest(`/api/onvif/${encodeURIComponent(onvif.camera.value)}`);
+    if (generation === onvifGeneration) onvif.url.value = data.device_url || "";
+  } catch (error) { if (generation === onvifGeneration) onvifMessage(error.message, "error"); }
+}
+async function inspectOnvif() {
+  const generation = ++onvifGeneration, camera = onvif.camera.value;
+  if (!camera || activePtz) return;
+  onvifBusy = true; onvifOptions = null; onvif.profile.replaceChildren(); onvifButtons();
+  onvifMessage("카메라 서비스와 프로파일 확인 중…");
+  try {
+    const data = await onvifRequest(`/api/onvif/${encodeURIComponent(camera)}`, onvif.url.value.trim() ? {device_url: onvif.url.value.trim()} : {});
+    if (generation !== onvifGeneration) return;
+    onvif.url.value = data.device_url;
+    onvif["device-info"].textContent = [data.identity?.manufacturer, data.identity?.model].filter(Boolean).join(" · ") || "장비 정보 미제공";
+    onvif.profile.replaceChildren(...data.profiles.map(profile => new Option(`${profile.name}${profile.ptz_configuration ? " · PTZ" : " · 고정"}`, profile.token)));
+    onvifBusy = false;
+    await loadOnvifProfile(generation);
+  } catch (error) { if (generation === onvifGeneration) onvifMessage(error.message, "error"); }
+  finally { if (generation === onvifGeneration) { onvifBusy = false; onvifButtons(); } }
+}
+async function loadOnvifProfile(generation = ++onvifGeneration) {
+  onvifOptions = null; onvifBusy = true; onvifButtons();
+  try {
+    const data = await onvifRequest(`/api/onvif/${encodeURIComponent(onvif.camera.value)}/profile`, {profile_token: onvif.profile.value});
+    if (generation !== onvifGeneration) return;
+    onvifOptions = data.options;
+    onvifMessage(data.supported ? "방향·줌 버튼을 한 번 누르면 짧게 이동한 뒤 자동 정지합니다." : "이 프로파일은 지원되는 PTZ 이동 기능이 없습니다.", data.supported ? "live" : "idle");
+  } catch (error) { if (generation === onvifGeneration) onvifMessage(error.message, "error"); }
+  finally { if (generation === onvifGeneration) { onvifBusy = false; onvifButtons(); } }
+}
+onvif.camera.addEventListener("change", selectOnvifCamera);
+onvif.inspect.addEventListener("click", inspectOnvif);
+onvif.profile.addEventListener("change", () => loadOnvifProfile());
+onvif.discover.addEventListener("click", async () => {
+  onvif.discover.disabled = true; onvif.devices.textContent = "네트워크 카메라 검색 중…";
+  try {
+    const value = onvif.interface.value.trim();
+    const data = await onvifRequest("/api/onvif/discover", value ? {interface: value} : {});
+    onvif.devices.replaceChildren();
+    if (!data.devices.length) onvif.devices.textContent = "발견된 장비가 없습니다. 같은 네트워크인지, ONVIF가 켜져 있는지 확인하세요. 주소를 직접 입력해 조회할 수도 있습니다.";
+    for (const device of data.devices) {
+      const article = document.createElement("article"), name = document.createElement("strong"), address = document.createElement("span");
+      name.textContent = device.name; address.textContent = device.address; article.append(name, address);
+      if (device.matched_streams.length) {
+        const button = document.createElement("button"); button.type = "button"; button.textContent = "이 카메라 기능 확인";
+        button.addEventListener("click", async () => {
+          if (activePtz) return;
+          onvif.camera.value = device.matched_streams.includes(onvif.camera.value) ? onvif.camera.value : device.matched_streams[0];
+          await selectOnvifCamera(); onvif.url.value = device.device_urls[0]; await inspectOnvif();
+        }); article.append(button);
+      } else { const note = document.createElement("p"); note.textContent = "미등록 장비 · 서버에 RTSP 카메라를 등록하면 제어할 수 있습니다."; article.append(note); }
+      onvif.devices.append(article);
+    }
+  } catch (error) { onvif.devices.textContent = error.message; }
+  finally { onvif.discover.disabled = false; }
+});
+for (const button of document.querySelectorAll("[data-ptz]")) button.addEventListener("click", async () => {
+  if (activePtz || !onvifOptions) return;
+  const directions = {up: [0,.5,0], down: [0,-.5,0], left: [-.5,0,0], right: [.5,0,0], "zoom-in": [0,0,.5], "zoom-out": [0,0,-.5]};
+  const [pan,tilt,zoom] = directions[button.dataset.ptz];
+  const target = {camera: onvif.camera.value, profile_token: onvif.profile.value}; activePtz = target;
+  const duration_ms = Math.max(onvifOptions.min_duration_ms, Math.min(300,onvifOptions.max_duration_ms));
+  button.setAttribute("aria-pressed", "true"); onvifButtons(); onvifMessage(`${target.camera} 이동·정지 처리 중…`);
+  try {
+    await onvifRequest(`/api/onvif/${encodeURIComponent(target.camera)}/ptz`, {action: "move", profile_token: target.profile_token, pan, tilt, zoom, duration_ms});
+    onvifMessage("이동 후 정지 명령이 확인됐습니다.", "live");
+  } catch (error) { onvifMessage(`${error.message} · 장비 상태를 확인하세요.`, "error"); }
+  finally { activePtz = null; button.setAttribute("aria-pressed", "false"); onvifButtons(); }
+});
+byId("ptz-stop").addEventListener("click", async () => {
+  const target = activePtz || {camera: onvif.camera.value, profile_token: onvif.profile.value};
+  try { await onvifRequest(`/api/onvif/${encodeURIComponent(target.camera)}/ptz`, {action: "stop", profile_token: target.profile_token}); onvifMessage("정지 명령이 확인됐습니다.", "live"); }
+  catch (error) { onvifMessage(error.message, "error"); }
+});

@@ -3,7 +3,7 @@
 //! 0x18000ff30 (timestamp grouping), 0x1800100b0 (AVCC), 0x180010250 (SPS/PPS).
 //! Invalid/lost packets are dropped until an IDR; unsafe original bounds are not preserved.
 mod audio;
-mod auth;
+pub mod auth;
 pub use audio::{AudioCodec, AudioConfig, AudioFrame};
 mod h264;
 mod rtp;

@@ -168,5 +168,14 @@ button.primary:active:not(:disabled) { background: var(--orange); border-color: 
 .camera-placeholder p { font-size: 10px; }
 .camera-wall.focused { grid-template-columns: minmax(0,1fr); }
 .camera-wall.focused > :not(.expanded) { display: none; }
+.ptz-pad { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; margin-top: 11px; }
+.ptz-pad [data-ptz="up"] { grid-column: 2; }
+.ptz-pad [data-ptz="left"] { grid-column: 1; }
+.ptz-pad [data-ptz="down"] { grid-column: 2; }
+[data-ptz][aria-pressed="true"] { color: var(--orange); border-color: var(--orange); background: #293135; }
+#onvif-devices { max-height: 210px; overflow-y: auto; overflow-wrap: anywhere; }
+#onvif-device-info, #onvif-hint { overflow-wrap: anywhere; }
+#onvif-state[data-state="live"] { color: var(--mint); }
+#onvif-state[data-state="error"] { color: var(--red); }
 @media (max-width: 930px) { .camera-wall[data-layout="16"], .camera-wall[data-layout="9"] { grid-template-columns: repeat(2,minmax(0,1fr)); } .view-toolbar { gap: 7px; padding: 9px; flex-wrap: wrap; height: auto; min-height: 52px; } }
 @media (max-width: 620px) { .camera-wall, .camera-wall[data-layout="16"], .camera-wall[data-layout="9"] { grid-template-columns: minmax(0,1fr); } .toolbar-center { display: none; } }

@@ -86,7 +86,7 @@ impl Archive {
     pub async fn initialize(&self, root: &str) -> Result<()> {
         let path = PathBuf::from(root).join("archive.sqlite");
         self.path.set(path).ok();
-        self.run(|db| { db.execute_batch("PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS clips(stream TEXT NOT NULL,file TEXT NOT NULL,start_ms INTEGER NOT NULL,end_ms INTEGER NOT NULL,bytes INTEGER NOT NULL,estimated INTEGER NOT NULL,PRIMARY KEY(stream,file)); CREATE INDEX IF NOT EXISTS clips_time ON clips(stream,start_ms,end_ms); CREATE TABLE IF NOT EXISTS controls(stream TEXT PRIMARY KEY,json TEXT NOT NULL); CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value INTEGER NOT NULL);")?; Ok(()) }).await
+        self.run(|db| { db.execute_batch("PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS clips(stream TEXT NOT NULL,file TEXT NOT NULL,start_ms INTEGER NOT NULL,end_ms INTEGER NOT NULL,bytes INTEGER NOT NULL,estimated INTEGER NOT NULL,PRIMARY KEY(stream,file)); CREATE INDEX IF NOT EXISTS clips_time ON clips(stream,start_ms,end_ms); CREATE TABLE IF NOT EXISTS controls(stream TEXT PRIMARY KEY,json TEXT NOT NULL); CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS onvif_endpoints(stream TEXT PRIMARY KEY,url TEXT NOT NULL);")?; Ok(()) }).await
     }
     pub(crate) async fn run<T: Send + 'static>(
         &self,
@@ -142,6 +142,25 @@ impl Archive {
             ensure!(value >= 1024 * 1024, "invalid persisted storage limit");
         }
         Ok(limit.map(|v| v as u64))
+    }
+    pub async fn onvif_endpoint(&self, id: &str) -> Result<Option<String>> {
+        let id = id.to_owned();
+        self.read(move |db| {
+            use rusqlite::OptionalExtension;
+            Ok(db
+                .query_row(
+                    "SELECT url FROM onvif_endpoints WHERE stream=?1",
+                    [id],
+                    |r| r.get(0),
+                )
+                .optional()?)
+        })
+        .await
+    }
+    pub async fn save_onvif_endpoint(&self, id: &str, url: &str) -> Result<()> {
+        let id = id.to_owned();
+        let url = url.to_owned();
+        self.run(move|db|{db.execute("INSERT INTO onvif_endpoints VALUES(?1,?2) ON CONFLICT(stream) DO UPDATE SET url=excluded.url",params![id,url])?;Ok(())}).await
     }
     pub async fn save_storage_limit(&self, limit: u64) -> Result<()> {
         ensure!(

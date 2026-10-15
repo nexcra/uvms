@@ -4,6 +4,7 @@ mod config;
 mod hls;
 mod ingest;
 mod mse;
+mod onvif;
 mod operations;
 mod record;
 mod record_input;
@@ -29,6 +30,7 @@ use tower_http::services::ServeDir;
 pub(crate) struct App {
     config: Arc<Config>,
     events: operations::Events,
+    onvif: onvif::State,
     slots: Arc<Semaphore>,
     hub: ingest::Hub,
     shutdown: CancellationToken,
@@ -63,6 +65,7 @@ async fn main() -> Result<()> {
         config: Arc::new(cfg),
         hub: ingest::Hub::new(events.clone()),
         events,
+        onvif: onvif::State::default(),
         shutdown: CancellationToken::new(),
         recordings: record::Status::default(),
         archive: archive::Archive::default(),
@@ -100,6 +103,10 @@ fn router(app: Arc<App>) -> Router {
         .route("/api/status",get(operations::status))
         .route("/api/storage",get(record::storage_status).put(record::storage_update))
         .route("/api/events",get(operations::events))
+        .route("/api/onvif/discover",axum::routing::post(onvif::discover))
+        .route("/api/onvif/{stream}",get(onvif::status).post(onvif::inspect))
+        .route("/api/onvif/{stream}/profile",axum::routing::post(onvif::details))
+        .route("/api/onvif/{stream}/ptz",axum::routing::post(onvif::command))
         .route("/api/timeline/{stream}",get(timeline::get))
         .route("/api/streams",get(streams))
         .route("/api/gpu",get(|State(app):State<Arc<App>>|async move {Json(video::status(app.config.nvidia_device,app.config.nvidia_bitrate).await)}))
@@ -249,6 +256,7 @@ mod tests {
         Arc::new(App {
             config: Arc::new(Config::default()),
             events: operations::Events::default(),
+            onvif: onvif::State::default(),
             slots: Arc::new(Semaphore::new(2)),
             hub: ingest::Hub::default(),
             shutdown: CancellationToken::new(),

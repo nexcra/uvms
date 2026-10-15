@@ -11,6 +11,11 @@ the deliverable archives.
   runtime dependency. ffprobe is used outside the service for development validation.
   Neither executable is bundled in the native binary archive.
 - Playwright is a development-only browser verification dependency.
+- ONVIF uses reqwest 0.12.28 (MIT/Apache-2.0) with rustls TLS, roxmltree 0.21.1
+  (MIT/Apache-2.0) for bounded XML parsing, and sha1 0.10 (MIT/Apache-2.0) for
+  the standard WS-Security UsernameToken digest. HTTP Digest reuses this project's
+  RTSP authentication implementation. No vendor SDK or external ONVIF daemon is used.
+  This is a standards-based extension, not a recovered uVMS ONVIF implementation.
 - hls.js 1.7.3 (Apache-2.0) is vendored for browser HLS playback, including its
   license in `web/vendor/hls.LICENSE`; no CDN is required at runtime.
 - Audio uses Symphonia 0.5.5 (MPL-2.0), standalone libopus via opus 0.3.1 /

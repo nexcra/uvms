@@ -1,0 +1,85 @@
+{
+  "version": "0.6.0",
+  "date": "2026-10-15",
+  "rust_tests": {
+    "passed": 45,
+    "failed": 0,
+    "ignored_benchmark": 1
+  },
+  "clippy": "passed -D warnings",
+  "mock_backend": {
+    "passed": true,
+    "verified": [
+      "WS-Discovery correlation and deduplication",
+      "WS-Security SHA1 nonce digest with XML escaping and camera clock correction",
+      "HTTP SHA-256 Digest with query string",
+      "Media1, Media2, GetCapabilities fallback",
+      "fixed profile rejection and velocity/timeout validation",
+      "ContinuousMove + Stop",
+      "same-device alias serialization",
+      "Stop after HTTP failure, timeout and caller disconnect",
+      "same-origin rejection",
+      "cross-host XAddr rejection"
+    ],
+    "soap_requests": 38
+  },
+  "mock_browser": {
+    "passed": true,
+    "errors": [],
+    "verified": [
+      "discovery selection",
+      "inspection and camera/profile switching",
+      "unsupported controls disabled",
+      "six directional/zoom actions each followed by Stop",
+      "explicit Stop",
+      "inspection failure keeps controls disabled",
+      "desktop/mobile no horizontal overflow",
+      "no page errors"
+    ]
+  },
+  "real_camera": {
+    "manufacturer": "Amcrest",
+    "model": "IP2M-841W-V3",
+    "discovery_reply": true,
+    "profiles": 2,
+    "ptz_capabilities_and_status_read": true,
+    "movement_tested": false,
+    "min_duration_ms": 1000,
+    "current_input_video_codec": "hevc",
+    "live_playback_in_this_gpu_absent_server": false
+  },
+  "production_browser": {
+    "passed": true,
+    "errors": [],
+    "movement_requests": 0,
+    "device": "Amcrest · IP2M-841W-V3",
+    "discovered": [
+      "Amcrest"
+    ],
+    "video_stream": "camera (synthetic)",
+    "video_width": 640
+  },
+  "deployment": {
+    "passed": true,
+    "health": {
+      "media_engine": "rust-native",
+      "status": "ok",
+      "version": "0.6.0"
+    },
+    "configuration_preserved": true,
+    "existing_recordings_preserved": 813,
+    "binary_sha256": "5636e954b42dc9f45b391d6d8e7aca3eac67494908b12d70597e9c569b1a9822",
+    "binary_bytes": 20545528
+  },
+  "readiness": "ok",
+  "recording_limit_bytes": 10737418240,
+  "limitations": [
+    "IPv4 discovery only; multicast not guaranteed across NAT/VLAN",
+    "Discovery lists new devices but does not register RTSP streams",
+    "PTZ ContinuousMove and Stop only; no presets or tours",
+    "No real motor/zoom movement test",
+    "Real H265 video playback unavailable without a supported GPU; synthetic H264 playback verified"
+  ],
+  "original_binary_reconstruction": false,
+  "java_modified": false
+}

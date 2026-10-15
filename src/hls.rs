@@ -560,11 +560,13 @@ mod tests {
             crate::config::StreamConfig {
                 url_env: "UVMS_HLS_TEST_NO_CAMERA_CREDENTIALS".into(),
                 record: false,
+                ..Default::default()
             },
         );
         let app = Arc::new(App {
             config: Arc::new(config),
             events: crate::operations::Events::default(),
+            onvif: crate::onvif::State::default(),
             slots: Arc::new(tokio::sync::Semaphore::new(32)),
             hub: crate::ingest::Hub::default(),
             shutdown: tokio_util::sync::CancellationToken::new(),

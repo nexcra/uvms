@@ -29,3 +29,9 @@ nvidia_bitrate = 4000000
 [streams.camera]
 url_env = "CAMERA_RTSP_URL"
 record = true
+# ONVIF defaults to http://the-RTSP-host/onvif/device_service and reuses its credentials.
+# Discovery/UI inspection can save a different endpoint on the same camera host.
+# onvif_url = "http://192.168.1.20:80/onvif/device_service"
+# Only needed when the camera has a separate ONVIF account:
+# onvif_username_env = "CAMERA_ONVIF_USER"
+# onvif_password_env = "CAMERA_ONVIF_PASSWORD"

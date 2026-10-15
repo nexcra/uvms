@@ -1,5 +1,9 @@
 # UVMS Rust Linux media service
 
+v0.6.0은 [ONVIF 카메라 검색·PTZ](docs/onvif.md)를 추가한다.
+웹에서 검색한 장비를 등록된 RTSP 카메라와 연결해 프로필·지원 범위를 조회하고,
+방향·줌을 짧게 이동한 뒤 정지한다. 기존 카메라 계정을 사용하며 서비스 로그인은 없다.
+
 v0.5.1은 [실행 중 녹화 한도 변경·자동 재개](docs/storage-control.md)를 추가한다.
 수동 중지와 예약은 유지하고, 기존 영상은 삭제하지 않는다.
 
@@ -38,6 +42,7 @@ Rust 공유 UDP·버퍼 개선과 동일 입력 전후 측정은 [docs/rust-opti
 | 녹화 검색·재생 | SQLite 카메라·시간 색인, 브라우저 재생·탐색, Range 다운로드 |
 | RTSP 재송출 | TCP interleaved H.264와 원본 음성, 별도 인증 없음, RTCP SR/SDES, VLC/NVR용 |
 | 운영 | 다중 alias, alias별 공통 입력·음성 변환, 음성 상태, 녹화 연결 재시도, systemd |
+| ONVIF·PTZ | IPv4 WS-Discovery, Media1/Media2 프로필, 카메라 계정 인증, ContinuousMove/Stop 방향·줌 제어 |
 
 정상 종료 시 현재 녹화 파일도 완료 처리한다. 강제 종료나 디스크 쓰기 실패 시 .partial 파일은 자동 공개하지 않는다. 저장 한도에 도달하면 기존 녹화를 삭제하지 않고 쓰기를 중단한다. 용량 제한은 시작 시 기존 파일도 합산한다. 파일을 수동 정리한 뒤 서비스를 재시작하면 사용량을 다시 계산한다.
 
