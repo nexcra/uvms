@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import time
 import urllib.request
+import urllib.error
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 WORK = pathlib.Path(tempfile.mkdtemp(prefix='uvms-soak-quota-'))
@@ -81,6 +82,17 @@ try:
         listing=api('/api/recordings')
         assert listing['used_bytes']==sum(f['bytes'] for f in before.values())
         assert len(listing['files'])==len(before)
+        try:
+            urllib.request.urlopen(BASE+'/readyz',timeout=3)
+            raise AssertionError('Full recording quota must report degraded readiness')
+        except urllib.error.HTTPError as error:
+            assert error.code==503
+            readiness=json.load(error)
+        assert readiness['status']=='degraded'
+        assert all(c['recording_requested'] and not c['recording_ok'] for c in readiness['cameras'])
+        events=api('/api/events?limit=1000')['events']
+        assert {e['stream'] for e in events if e['kind']=='recording' and e['state']=='storage_full'}==set(ALIASES)
+        report.setdefault('readiness',[]).append(readiness)
         stop(process);process=None
         if run==0:
             report['files']=before
@@ -100,7 +112,7 @@ except Exception as error:
 finally:
     if process is not None:
         stop(process)
-    output=ROOT/'test-results/soak/quota.json';output.parent.mkdir(parents=True,exist_ok=True)
+    output=ROOT/os.environ.get('UVMS_QUOTA_OUTPUT','test-results/soak/quota.json');output.parent.mkdir(parents=True,exist_ok=True)
     output.write_text(json.dumps(report,indent=2));print(json.dumps(report))
 if not report['passed']:
     raise SystemExit(1)

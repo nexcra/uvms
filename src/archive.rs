@@ -88,8 +88,22 @@ impl Archive {
         self.path.set(path).ok();
         self.run(|db| { db.execute_batch("PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS clips(stream TEXT NOT NULL,file TEXT NOT NULL,start_ms INTEGER NOT NULL,end_ms INTEGER NOT NULL,bytes INTEGER NOT NULL,estimated INTEGER NOT NULL,PRIMARY KEY(stream,file)); CREATE INDEX IF NOT EXISTS clips_time ON clips(stream,start_ms,end_ms); CREATE TABLE IF NOT EXISTS controls(stream TEXT PRIMARY KEY,json TEXT NOT NULL);")?; Ok(()) }).await
     }
-    async fn run<T: Send + 'static>(
+    pub(crate) async fn run<T: Send + 'static>(
         &self,
+        f: impl FnOnce(&mut Connection) -> Result<T> + Send + 'static,
+    ) -> Result<T> {
+        self.with_flags(rusqlite::OpenFlags::default(), f).await
+    }
+    pub(crate) async fn read<T: Send + 'static>(
+        &self,
+        f: impl FnOnce(&mut Connection) -> Result<T> + Send + 'static,
+    ) -> Result<T> {
+        self.with_flags(rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY, f)
+            .await
+    }
+    async fn with_flags<T: Send + 'static>(
+        &self,
+        flags: rusqlite::OpenFlags,
         f: impl FnOnce(&mut Connection) -> Result<T> + Send + 'static,
     ) -> Result<T> {
         let path = self
@@ -98,7 +112,7 @@ impl Archive {
             .ok_or_else(|| anyhow::anyhow!("archive is not initialized"))?
             .clone();
         tokio::task::spawn_blocking(move || {
-            let mut db = Connection::open(path)?;
+            let mut db = Connection::open_with_flags(path, flags)?;
             db.busy_timeout(std::time::Duration::from_secs(5))?;
             f(&mut db)
         })
@@ -150,6 +164,18 @@ impl Archive {
             })
         })
         .await
+    }
+    pub async fn timeline_candidates(
+        &self,
+        stream: String,
+        from: u64,
+        to: u64,
+    ) -> Result<Vec<Clip>> {
+        self.read(move |db| {
+            let mut query=db.prepare("SELECT stream,file,start_ms,end_ms,bytes,estimated FROM clips WHERE stream=?1 AND start_ms<?3 AND (end_ms>?2 OR estimated=1) ORDER BY start_ms LIMIT 10001")?;
+            let rows=query.query_map(params![stream,from as i64,to as i64],|r|Ok(Clip{stream:r.get(0)?,file:r.get(1)?,start_ms:r.get::<_,i64>(2)? as u64,end_ms:r.get::<_,i64>(3)? as u64,bytes:r.get::<_,i64>(4)? as u64,estimated:r.get(5)?}))?;
+            Ok(rows.collect::<std::result::Result<Vec<_>,_>>()?)
+        }).await
     }
     pub async fn save_control(&self, stream: &str, control: Control) -> Result<()> {
         control.validate()?;

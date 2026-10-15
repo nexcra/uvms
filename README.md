@@ -1,5 +1,9 @@
 # UVMS Rust Linux media service
 
+v0.5.0은 장애·복구 이력(`/api/events`), 운영 상태(`/api/status`, `/readyz`),
+녹화 구간·공백(`/api/timeline/{stream}`) API와 미완료 녹화 감지를 추가한다.
+현재 지원 범위·남은 VMS 기능·API 사용법은 [엔진 점검표](docs/vms-engine-audit-2026-10-15.md)에 있다.
+
 v0.4.4는 녹화 수신을 파일 확정 작업과 분리해 저장 지연에 따른 누락을 줄인다.
 이미 색인된 완료 녹화의 반복 분석을 생략해 재시작 대기를 줄이고,
 다중 화면의 수동·예약 녹화 상태 표시를 수정한다. 다중 카메라·동시 녹화와

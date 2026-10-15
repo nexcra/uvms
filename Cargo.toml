@@ -1,6 +1,6 @@
 [package]
 name = "uvms-gateway"
-version = "0.4.4"
+version = "0.5.0"
 edition = "2021"
 license = "MIT"
 description = "Linux RTSP to WebRTC gateway with WebSocket playback"
@@ -11,6 +11,7 @@ nvidia = ["unreal-nvidia/nvidia"]
 
 [dependencies]
 anyhow = "1"
+libc = "0.2"
 axum = { version = "0.8.9", features = ["ws"] }
 bytes = "1"
 serde = { version = "1", features = ["derive"] }

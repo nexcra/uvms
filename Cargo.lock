@@ -2630,7 +2630,7 @@ dependencies = [
 
 [[package]]
 name = "uvms-gateway"
-version = "0.4.4"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -2639,6 +2639,7 @@ dependencies = [
  "chrono",
  "fdk-aac",
  "futures-util",
+ "libc",
  "opus",
  "rusqlite",
  "serde",

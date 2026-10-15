@@ -72,11 +72,18 @@ impl Feed {
 }
 #[derive(Default)]
 pub struct Hub {
+    events: crate::operations::Events,
     feeds: Mutex<HashMap<String, Arc<Feed>>>,
     initializing: Mutex<HashMap<String, Arc<Mutex<()>>>>,
     video_errors: Mutex<HashMap<String, String>>,
 }
 impl Hub {
+    pub fn new(events: crate::operations::Events) -> Self {
+        Self {
+            events,
+            ..Self::default()
+        }
+    }
     pub async fn acquire(
         &self,
         id: &str,
@@ -112,6 +119,7 @@ impl Hub {
             return Ok(feed.clone());
         }
         let source = config::source_url(stream)?;
+        self.events.emit(Some(id), "input", "connecting");
         let connected = tokio::time::timeout(
             Duration::from_secs(30),
             crate::video::Source::connect(&source, config.nvidia_device, config.nvidia_bitrate),
@@ -125,6 +133,7 @@ impl Hub {
                 client
             }
             Err(error) => {
+                self.events.emit(Some(id), "input", "unavailable");
                 self.video_errors
                     .lock()
                     .await
@@ -167,18 +176,22 @@ impl Hub {
         self.feeds.lock().await.insert(id.into(), feed.clone());
         let live = feed.clone();
         let id = id.to_owned();
+        let events = self.events.clone();
         tokio::spawn(async move {
             let mut last_subscriber = tokio::time::Instant::now();
             let mut last_video = tokio::time::Instant::now();
+            let mut first_video = true;
+            let mut ending = "interrupted";
             loop {
                 tokio::select! {
-                    _=shutdown.cancelled()=>break,
+                    _=shutdown.cancelled()=>{ending="stopped";break},
                     result=tokio::time::timeout(Duration::from_secs(15),client.next_media())=> match result {
                         Ok(Ok(MediaEvent::Video(frame)))=>{
+                            if first_video { events.emit(Some(&id),"input","online");first_video=false; }
                             last_video=tokio::time::Instant::now();
-                            if client.video()!=&live.video {tracing::warn!(stream=%id,"H264 configuration changed; reopening session");break}
+                            if client.video()!=&live.video {ending="format_changed";tracing::warn!(stream=%id,"H264 configuration changed; reopening session");break}
                             if live.frames.receiver_count()>0 || live.audio_frames.receiver_count()>0 || live.rtc_audio.receiver_count()>0 || live.archive_audio_frames.receiver_count()>0 {last_subscriber=tokio::time::Instant::now();}
-                            else if last_subscriber.elapsed()>=Duration::from_secs(30){break}
+                            else if last_subscriber.elapsed()>=Duration::from_secs(30){ending="idle";break}
                             let _=live.frames.send(Arc::new(SharedFrame::new(frame)));
                         },
                         Ok(Ok(MediaEvent::Audio(frame)))=>{
@@ -206,6 +219,7 @@ impl Hub {
                 }
             }
             live.stopped.cancel();
+            events.emit(Some(&id), "input", ending);
         });
         Ok(feed)
     }

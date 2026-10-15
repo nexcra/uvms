@@ -31,6 +31,7 @@ use unreal_mp4::Muxer;
 pub struct Status {
     states: Mutex<HashMap<String, String>>,
     used: AtomicU64,
+    unfinished: AtomicU64,
     controls: Mutex<HashMap<String, watch::Sender<Control>>>,
     control_locks: Mutex<HashMap<String, Arc<Mutex<()>>>>,
 }
@@ -51,8 +52,24 @@ impl Status {
             .cloned()
             .unwrap_or_else(|| "off".into())
     }
-    async fn set(&self, id: &str, s: &str) {
-        self.states.lock().await.insert(id.into(), s.into());
+    pub fn used_bytes(&self) -> u64 {
+        self.used.load(Ordering::SeqCst)
+    }
+    pub fn unfinished_files(&self) -> u64 {
+        self.unfinished.load(Ordering::Relaxed)
+    }
+    pub async fn active(&self, id: &str, default: bool) -> bool {
+        self.controls
+            .lock()
+            .await
+            .get(id)
+            .is_some_and(|tx| tx.borrow().active(default, now_ms()))
+    }
+    async fn set(&self, id: &str, s: &str, events: &crate::operations::Events) {
+        let previous = self.states.lock().await.insert(id.into(), s.into());
+        if previous.as_deref() != Some(s) {
+            events.emit(Some(id), "recording", s);
+        }
     }
     fn reserve(&self, n: u64, limit: u64) -> Result<()> {
         self.used
@@ -87,6 +104,11 @@ pub async fn start(app: Arc<App>) -> Result<Vec<tokio::task::JoinHandle<()>>> {
                 let bytes = f.metadata().await?.len();
                 used = used.saturating_add(bytes);
                 let name = f.file_name().to_string_lossy().into_owned();
+                if name.ends_with(".partial") {
+                    app.recordings.unfinished.fetch_add(1, Ordering::Relaxed);
+                    app.events
+                        .emit(Some(&id), "archive", "unfinished_file_preserved");
+                }
                 if indexed.get(&name) == Some(&bytes) {
                     continue;
                 }
@@ -133,20 +155,20 @@ pub async fn start(app: Arc<App>) -> Result<Vec<tokio::task::JoinHandle<()>>> {
                 if app.shutdown.is_cancelled(){break}
                 if !control.borrow().active(default,now_ms()) {
                     let state=if matches!(control.borrow().mode,crate::archive::Mode::Off)||control.borrow().schedules.is_empty(){"off"}else{"scheduled"};
-                    app.recordings.set(&id,state).await;
+                    app.recordings.set(&id,state, &app.events).await;
                     tokio::select!{_=app.shutdown.cancelled()=>break,_=control.changed()=>{},_=tokio::time::sleep(Duration::from_millis(250))=>{}}
                     continue;
                 }
-                app.recordings.set(&id,"connecting").await;
+                app.recordings.set(&id,"connecting", &app.events).await;
                 let outcome=record_source(&app,&id,&dir,&mut control,default).await;
-                if app.shutdown.is_cancelled(){app.recordings.set(&id,"stopped").await;break}
+                if app.shutdown.is_cancelled(){app.recordings.set(&id,"stopped", &app.events).await;break}
                 if outcome.as_ref().is_err_and(|e|e.is::<StorageFull>()) {
-                    app.recordings.set(&id,"storage_full").await;
+                    app.recordings.set(&id,"storage_full", &app.events).await;
                     tracing::warn!(stream=%id,"Recording budget reached; existing files preserved");
                     tokio::select!{_=app.shutdown.cancelled()=>break,_=control.changed()=>{}}
                     continue;
                 }
-                if let Err(error)=&outcome{app.recordings.set(&id,"retrying").await;let backlog=error.downcast_ref::<tokio::sync::broadcast::error::RecvError>().map(|e|e.to_string());tracing::warn!(stream=%id,backlog,"Recording interrupted; check source and storage");}
+                if let Err(error)=&outcome{app.recordings.set(&id,"retrying", &app.events).await;let backlog=error.downcast_ref::<tokio::sync::broadcast::error::RecvError>().map(|e|e.to_string());tracing::warn!(stream=%id,backlog,"Recording interrupted; check source and storage");}
                 if outcome.is_ok(){continue}
                 tokio::select!{_=app.shutdown.cancelled()=>break,_=control.changed()=>{},_=tokio::time::sleep(Duration::from_secs(3))=>{}}
             }
@@ -432,7 +454,7 @@ async fn record_source(
                     start_ms: timestamp,
                     end_ms: timestamp + f.duration_90k as u64 / 90,
                 });
-                app.recordings.set(id, "recording").await;
+                app.recordings.set(id, "recording", &app.events).await;
                 continue;
             }
             let s = segment.as_mut().unwrap();
@@ -543,12 +565,21 @@ pub async fn control(
     if app.archive.save_control(&id, c.clone()).await.is_err() {
         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
     }
+    app.events.emit(
+        Some(&id),
+        "recording_control",
+        match c.mode {
+            crate::archive::Mode::On => "on",
+            crate::archive::Mode::Off => "off",
+            crate::archive::Mode::Auto => "auto",
+        },
+    );
     if let Some(tx) = app.recordings.controls.lock().await.get(&id) {
         tx.send_replace(c);
     }
     control_status(State(app), Path(id)).await
 }
-fn safe_filename(s: &str) -> bool {
+pub(crate) fn safe_filename(s: &str) -> bool {
     s.ends_with(".mp4")
         && s.len() < 96
         && s.bytes()

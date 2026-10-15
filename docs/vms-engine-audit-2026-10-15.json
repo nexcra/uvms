@@ -1,0 +1,113 @@
+{
+  "version": "0.5.0",
+  "scope": "Rust engine operational APIs; no Java or web UI changes",
+  "unit_tests": {
+    "passed": 39,
+    "failed": 0,
+    "ignored": 1,
+    "clippy_warnings": 0
+  },
+  "integration": {
+    "passed": true,
+    "elapsed_seconds": 69.332,
+    "fixture": {
+      "run": "1792051767903984278",
+      "recording_dir": "/var/lib/uvms-soak/recordings-1792051767903984278",
+      "binary_sha256": "be83d36db966f7721a469ce0804c87f7066ecd383d67e01c990ea072a9329312",
+      "binary_bytes": 18393112,
+      "aliases": [
+        "aac",
+        "pcmu",
+        "pcma",
+        "opus"
+      ],
+      "http": 8099,
+      "source_proxy_port": 18576
+    },
+    "recovery_seconds": 1.943,
+    "idle_ready_without_camera_connections": true,
+    "crash_completed_files_preserved": 10,
+    "crash_partial_files_preserved": 4,
+    "missing_file_excluded_from_coverage": true,
+    "graceful_restart_preserves_journal_and_controls": true
+  },
+  "journal": {
+    "sampled_events": 77,
+    "kind_counts": {
+      "recording": 35,
+      "service": 3,
+      "recording_control": 8,
+      "input": 27,
+      "archive": 4
+    },
+    "final_lost_events": 0
+  },
+  "decoded_completed_clips": 18,
+  "coverage": {
+    "aac": {
+      "completed_clips": 5,
+      "recorded_ms": 52218,
+      "gap_ms": 16137,
+      "unavailable_clips": 0,
+      "unknown_duration_clips": 0
+    },
+    "pcmu": {
+      "completed_clips": 4,
+      "recorded_ms": 48661,
+      "gap_ms": 19694,
+      "unavailable_clips": 0,
+      "unknown_duration_clips": 0
+    },
+    "pcma": {
+      "completed_clips": 4,
+      "recorded_ms": 48665,
+      "gap_ms": 19690,
+      "unavailable_clips": 0,
+      "unknown_duration_clips": 0
+    },
+    "opus": {
+      "completed_clips": 5,
+      "recorded_ms": 63639,
+      "gap_ms": 4716,
+      "unavailable_clips": 0,
+      "unknown_duration_clips": 0
+    }
+  },
+  "quota": {
+    "passed": true,
+    "bytes": 1048576,
+    "recorded_bytes": 1041944,
+    "decoded_clips": 4,
+    "restart_count": 1,
+    "readiness_http": 503,
+    "recordings_preserved": true
+  },
+  "deployment": {
+    "passed": true,
+    "health": {
+      "media_engine": "rust-native",
+      "status": "ok",
+      "version": "0.5.0"
+    },
+    "configuration_preserved": true,
+    "existing_recordings_preserved": 225,
+    "binary_before_sha256": "4020b778981fa7b2663c0a780aece417159edba75abee129c38512eb380bff3a",
+    "binary_sha256": "be83d36db966f7721a469ce0804c87f7066ecd383d67e01c990ea072a9329312",
+    "binary_bytes": 18393112,
+    "backup": "/var/backups/uvms/rust-update-1792051970754006191"
+  },
+  "deployed_storage": {
+    "ready_http": 503,
+    "reason": "configured recording quota already full",
+    "limit_bytes": 268435456,
+    "used_bytes": 268432609,
+    "configuration_changed": false
+  },
+  "limitations": [
+    "Focused 69 second fault test, not a new hour/day soak",
+    "No browser rendering changes or new browser compatibility claims",
+    "Partial recordings preserved but not salvaged",
+    "No ONVIF/PTZ, motion detection, live camera CRUD, retention deletion or failover",
+    "Readiness evaluates recording requests, not end-to-end browser playback"
+  ]
+}

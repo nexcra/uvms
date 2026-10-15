@@ -564,6 +564,7 @@ mod tests {
         );
         let app = Arc::new(App {
             config: Arc::new(config),
+            events: crate::operations::Events::default(),
             slots: Arc::new(tokio::sync::Semaphore::new(32)),
             hub: crate::ingest::Hub::default(),
             shutdown: tokio_util::sync::CancellationToken::new(),

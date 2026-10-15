@@ -4,11 +4,13 @@ mod config;
 mod hls;
 mod ingest;
 mod mse;
+mod operations;
 mod record;
 mod record_input;
 mod relay;
 mod rtc;
 mod rtp_video;
+mod timeline;
 mod video;
 use anyhow::{Context, Result};
 use axum::{
@@ -26,6 +28,7 @@ use tokio_util::sync::CancellationToken;
 use tower_http::services::ServeDir;
 pub(crate) struct App {
     config: Arc<Config>,
+    events: operations::Events,
     slots: Arc<Semaphore>,
     hub: ingest::Hub,
     shutdown: CancellationToken,
@@ -54,10 +57,12 @@ async fn main() -> Result<()> {
     }
     let http = tokio::net::TcpListener::bind(cfg.bind).await?;
     let rtsp = tokio::net::TcpListener::bind(cfg.rtsp_bind).await?;
+    let events = operations::Events::default();
     let app = Arc::new(App {
         slots: Arc::new(Semaphore::new(cfg.max_sessions)),
         config: Arc::new(cfg),
-        hub: ingest::Hub::default(),
+        hub: ingest::Hub::new(events.clone()),
+        events,
         shutdown: CancellationToken::new(),
         recordings: record::Status::default(),
         archive: archive::Archive::default(),
@@ -66,6 +71,8 @@ async fn main() -> Result<()> {
     });
     rtc::shared_udp(&app).await?;
     let recorders = record::start(app.clone()).await?;
+    let journal = app.events.start(app.clone()).await?;
+    app.events.emit(None, "service", "started");
     let relay = tokio::spawn(relay::run(rtsp, app.clone()));
     tracing::info!(http=%app.config.bind,rtsp=%app.config.rtsp_bind,"Rust media service ready; native H264 passthrough");
     let signal = app.shutdown.clone();
@@ -81,11 +88,18 @@ async fn main() -> Result<()> {
     }
     let _ = relay.await;
     rtc::close_udp(&app).await;
+    app.events.emit(None, "service", "stopped");
+    app.events.stop();
+    let _ = tokio::time::timeout(Duration::from_secs(10), journal).await;
     Ok(())
 }
 fn router(app: Arc<App>) -> Router {
     Router::new()
         .route("/healthz",get(||async{Json(json!({"status":"ok","version":env!("CARGO_PKG_VERSION"),"media_engine":"rust-native"}))}))
+        .route("/readyz",get(operations::ready))
+        .route("/api/status",get(operations::status))
+        .route("/api/events",get(operations::events))
+        .route("/api/timeline/{stream}",get(timeline::get))
         .route("/api/streams",get(streams))
         .route("/api/gpu",get(|State(app):State<Arc<App>>|async move {Json(video::status(app.config.nvidia_device,app.config.nvidia_bitrate).await)}))
         .route("/api/recordings",get(record::list))
@@ -126,7 +140,7 @@ async fn streams(State(app): State<Arc<App>>) -> Response {
     for (id, s) in &app.config.streams {
         streams.push(json!({"id":id,"mode":"native","online":app.hub.online(id).await,"record":s.record,"recording":app.recordings.get(id).await,"audio":app.hub.audio_status(id).await,"video":app.hub.video_status(id).await}));
     }
-    Json(json!({"streams":streams,"video_only":false,"rtsp_port":app.config.rtsp_bind.port(),"default_stream":app.config.default_stream,"capabilities":{"hls":true,"dvr":true,"recording_control":true,"recording_search":true,"audio":true}}))
+    Json(json!({"streams":streams,"video_only":false,"rtsp_port":app.config.rtsp_bind.port(),"default_stream":app.config.default_stream,"capabilities":{"hls":true,"dvr":true,"recording_control":true,"recording_search":true,"audio":true,"events":true,"timeline":true,"operational_status":true}}))
         .into_response()
 }
 async fn upgrade_rtc(
@@ -230,9 +244,10 @@ mod tests {
     use axum::{body::Body, http::Request};
     use tower::ServiceExt;
 
-    fn app() -> Arc<App> {
+    pub(crate) fn app() -> Arc<App> {
         Arc::new(App {
             config: Arc::new(Config::default()),
+            events: operations::Events::default(),
             slots: Arc::new(Semaphore::new(2)),
             hub: ingest::Hub::default(),
             shutdown: CancellationToken::new(),
