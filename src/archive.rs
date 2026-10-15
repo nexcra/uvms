@@ -3,11 +3,62 @@
 use anyhow::{ensure, Result};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::PathBuf, sync::OnceLock};
+use std::{
+    collections::HashMap,
+    path::PathBuf,
+    sync::{Arc, Mutex, OnceLock},
+};
+use tokio::sync::Semaphore;
 
-#[derive(Default)]
 pub struct Archive {
     path: OnceLock<PathBuf>,
+    readers: Arc<Connections>,
+    writer: Arc<Connections>,
+}
+struct Connections {
+    idle: Mutex<Vec<(Connection, FileIdentity)>>,
+    slots: Arc<Semaphore>,
+}
+impl Connections {
+    fn new(count: usize) -> Arc<Self> {
+        Arc::new(Self {
+            idle: Mutex::new(Vec::new()),
+            slots: Arc::new(Semaphore::new(count)),
+        })
+    }
+}
+impl Default for Archive {
+    fn default() -> Self {
+        Self {
+            path: OnceLock::new(),
+            readers: Connections::new(4),
+            writer: Connections::new(1),
+        }
+    }
+}
+// Detect removal/replacement before reusing an open handle. Readiness must not
+// report success from an unlinked SQLite database, or recreate a missing DB.
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct FileIdentity(u64, u64);
+fn file_identity(path: &std::path::Path) -> std::io::Result<FileIdentity> {
+    let metadata = std::fs::metadata(path)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        Ok(FileIdentity(metadata.dev(), metadata.ino()))
+    }
+    #[cfg(not(unix))]
+    {
+        // Conservative invalidation on platforms without Unix inode identity.
+        Ok(FileIdentity(
+            metadata.len(),
+            metadata
+                .modified()?
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_nanos() as u64,
+        ))
+    }
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Clip {
@@ -111,10 +162,36 @@ impl Archive {
             .get()
             .ok_or_else(|| anyhow::anyhow!("archive is not initialized"))?
             .clone();
+        let pool = if flags.contains(rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY) {
+            self.readers.clone()
+        } else {
+            self.writer.clone()
+        };
+        // Bound work before entering the blocking pool. A cancelled HTTP caller
+        // cannot release this slot while its SQLite operation is still running.
+        let permit = pool.slots.clone().acquire_owned().await?;
         tokio::task::spawn_blocking(move || {
-            let mut db = Connection::open_with_flags(path, flags)?;
-            db.busy_timeout(std::time::Duration::from_secs(5))?;
-            f(&mut db)
+            let _permit = permit;
+            let current = file_identity(&path).ok();
+            let cached = pool.idle.lock().unwrap_or_else(|e| e.into_inner()).pop();
+            let mut db = match cached {
+                Some((db, identity)) if Some(identity) == current => db,
+                _ => {
+                    let db = Connection::open_with_flags(&path, flags)?;
+                    db.busy_timeout(std::time::Duration::from_secs(5))?;
+                    db
+                }
+            };
+            let identity = file_identity(&path)?;
+            let result = f(&mut db);
+            // Never hand a failed or unfinished transaction to another caller.
+            if result.is_ok() && db.is_autocommit() && file_identity(&path).ok() == Some(identity) {
+                pool.idle
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .push((db, identity));
+            }
+            result
         })
         .await?
     }
@@ -176,9 +253,9 @@ impl Archive {
     /// contents need not be reparsed on every startup; still check disk size.
     pub async fn indexed_files(&self, stream: &str) -> Result<HashMap<String, u64>> {
         let stream = stream.to_owned();
-        self.run(move |db| {
+        self.read(move |db| {
             let mut query =
-                db.prepare("SELECT file,bytes FROM clips WHERE stream=?1 AND estimated=0")?;
+                db.prepare_cached("SELECT file,bytes FROM clips WHERE stream=?1 AND estimated=0")?;
             let rows = query.query_map([stream], |row| {
                 Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? as u64))
             })?;
@@ -194,11 +271,11 @@ impl Archive {
         limit: usize,
         offset: usize,
     ) -> Result<Vec<Clip>> {
-        self.run(move|db| { let mut q=db.prepare("SELECT stream,file,start_ms,end_ms,bytes,estimated FROM clips WHERE (?1 IS NULL OR stream=?1) AND end_ms>=?2 AND start_ms<=?3 ORDER BY start_ms DESC,stream,file LIMIT ?4 OFFSET ?5")?; let rows=q.query_map(params![stream,from.min(i64::MAX as u64)as i64,to.min(i64::MAX as u64)as i64,limit as i64,offset as i64],|r|Ok(Clip{stream:r.get(0)?,file:r.get(1)?,start_ms:r.get::<_,i64>(2)? as u64,end_ms:r.get::<_,i64>(3)?as u64,bytes:r.get::<_,i64>(4)?as u64,estimated:r.get(5)?}))?; Ok(rows.collect::<std::result::Result<Vec<_>,_>>()?) }).await
+        self.read(move|db| { let mut q=db.prepare_cached("SELECT stream,file,start_ms,end_ms,bytes,estimated FROM clips WHERE (?1 IS NULL OR stream=?1) AND end_ms>=?2 AND start_ms<=?3 ORDER BY start_ms DESC,stream,file LIMIT ?4 OFFSET ?5")?; let rows=q.query_map(params![stream,from.min(i64::MAX as u64)as i64,to.min(i64::MAX as u64)as i64,limit as i64,offset as i64],|r|Ok(Clip{stream:r.get(0)?,file:r.get(1)?,start_ms:r.get::<_,i64>(2)? as u64,end_ms:r.get::<_,i64>(3)?as u64,bytes:r.get::<_,i64>(4)?as u64,estimated:r.get(5)?}))?; Ok(rows.collect::<std::result::Result<Vec<_>,_>>()?) }).await
     }
     pub async fn control(&self, stream: &str) -> Result<Control> {
         let stream = stream.to_owned();
-        self.run(move |db| {
+        self.read(move |db| {
             use rusqlite::OptionalExtension;
             let text: Option<String> = db
                 .query_row("SELECT json FROM controls WHERE stream=?1", [stream], |r| {
@@ -219,7 +296,7 @@ impl Archive {
         to: u64,
     ) -> Result<Vec<Clip>> {
         self.read(move |db| {
-            let mut query=db.prepare("SELECT stream,file,start_ms,end_ms,bytes,estimated FROM clips WHERE stream=?1 AND start_ms<?3 AND (end_ms>?2 OR estimated=1) ORDER BY start_ms LIMIT 10001")?;
+            let mut query=db.prepare_cached("SELECT stream,file,start_ms,end_ms,bytes,estimated FROM clips WHERE stream=?1 AND start_ms<?3 AND (end_ms>?2 OR estimated=1) ORDER BY start_ms LIMIT 10001")?;
             let rows=query.query_map(params![stream,from as i64,to as i64],|r|Ok(Clip{stream:r.get(0)?,file:r.get(1)?,start_ms:r.get::<_,i64>(2)? as u64,end_ms:r.get::<_,i64>(3)? as u64,bytes:r.get::<_,i64>(4)? as u64,estimated:r.get(5)?}))?;
             Ok(rows.collect::<std::result::Result<Vec<_>,_>>()?)
         }).await
@@ -234,6 +311,89 @@ impl Archive {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[tokio::test]
+    async fn pooled_reads_are_readonly_and_missing_database_is_not_recreated() {
+        let root = std::env::temp_dir().join(format!("uvms-pool-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir(&root).unwrap();
+        let archive = Archive::default();
+        archive.initialize(root.to_str().unwrap()).await.unwrap();
+        archive.save_storage_limit(2 * 1024 * 1024).await.unwrap();
+        assert_eq!(
+            archive.storage_limit().await.unwrap(),
+            Some(2 * 1024 * 1024)
+        );
+        assert!(archive
+            .read(|db| {
+                db.execute("DELETE FROM settings", [])?;
+                Ok(())
+            })
+            .await
+            .is_err());
+        assert_eq!(
+            archive.storage_limit().await.unwrap(),
+            Some(2 * 1024 * 1024)
+        );
+        // A failed operation must not leak an explicit transaction to its successor.
+        assert!(archive
+            .run(|db| -> Result<()> {
+                db.execute_batch("BEGIN; DELETE FROM settings;")?;
+                anyhow::bail!("fixture failure")
+            })
+            .await
+            .is_err());
+        assert_eq!(
+            archive.storage_limit().await.unwrap(),
+            Some(2 * 1024 * 1024)
+        );
+        std::fs::rename(root.join("archive.sqlite"), root.join("removed.sqlite")).unwrap();
+        assert!(archive.storage_limit().await.is_err());
+        assert!(!root.join("archive.sqlite").exists());
+        drop(archive);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn cancelled_caller_keeps_writer_slot_until_sqlite_work_finishes() {
+        let root = std::env::temp_dir().join(format!("uvms-cancel-pool-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir(&root).unwrap();
+        let archive = Arc::new(Archive::default());
+        archive.initialize(root.to_str().unwrap()).await.unwrap();
+        let (started_tx, started_rx) = tokio::sync::oneshot::channel();
+        let (release_tx, release_rx) = std::sync::mpsc::channel();
+        let one = archive.clone();
+        let task = tokio::spawn(async move {
+            one.run(move |_| {
+                let _ = started_tx.send(());
+                release_rx.recv_timeout(std::time::Duration::from_secs(5))?;
+                Ok(())
+            })
+            .await
+        });
+        started_rx.await.unwrap();
+        task.abort();
+        assert_eq!(archive.writer.slots.available_permits(), 0);
+        // Read-only queries use another pool and remain responsive.
+        assert!(
+            tokio::time::timeout(std::time::Duration::from_secs(1), archive.storage_limit())
+                .await
+                .unwrap()
+                .is_ok()
+        );
+        release_tx.send(()).unwrap();
+        tokio::time::timeout(
+            std::time::Duration::from_secs(1),
+            archive.save_storage_limit(3 * 1024 * 1024),
+        )
+        .await
+        .unwrap()
+        .unwrap();
+        assert_eq!(
+            archive.storage_limit().await.unwrap(),
+            Some(3 * 1024 * 1024)
+        );
+        drop(archive);
+        std::fs::remove_dir_all(root).unwrap();
+    }
     #[test]
     fn repeating_schedule_boundaries_and_manual_override() {
         let mut c = Control {

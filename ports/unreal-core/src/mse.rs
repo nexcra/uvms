@@ -96,7 +96,21 @@ pub fn media(
     if total > i32::MAX as usize {
         return Err(Error::TooLarge);
     }
-    let mut out = vec![0u8; 10];
+    let header = media_header(buffer_filling, timestamp_ms, timeshift)?;
+    let mut out = Vec::with_capacity(total);
+    out.extend_from_slice(&header);
+    out.extend_from_slice(segment);
+    Ok(out)
+}
+
+/// Fixed application header, suitable for filling an existing mux prefix.
+/// Has the same timestamp/timeshift layout as `media`, without heap allocation.
+pub fn media_header(
+    buffer_filling: u8,
+    timestamp_ms: i32,
+    timeshift: Option<MediaTimeshift>,
+) -> Result<[u8; 10], Error> {
+    let mut out = [0u8; 10];
     out[0] = 2;
     out[1] = buffer_filling;
     if let Some(t) = timeshift {
@@ -110,7 +124,6 @@ pub fn media(
         }
     }
     out[6..10].copy_from_slice(&timestamp_ms.to_le_bytes());
-    out.extend_from_slice(segment);
     Ok(out)
 }
 
@@ -124,4 +137,39 @@ pub fn error(tracks: Tracks, realtime: bool, message: &str) -> Result<Vec<u8>, E
         }
     }
     Ok(out)
+}
+
+#[cfg(test)]
+mod header_tests {
+    use super::*;
+    #[test]
+    fn stack_header_preserves_native_signed_clock_and_noncontiguous_timeshift() {
+        assert_eq!(
+            media_header(7, -2, None).unwrap(),
+            [2, 7, 0, 0, 0, 0, 254, 255, 255, 255]
+        );
+        let shift = Some(MediaTimeshift {
+            in_progress: false,
+            current_seconds: Some(0x123456),
+        });
+        assert_eq!(
+            media_header(3, 0x11223344, shift).unwrap(),
+            [2, 3, 1, 0x12, 0x56, 0x34, 0x44, 0x33, 0x22, 0x11]
+        );
+        assert_eq!(
+            media(3, 0x11223344, shift, &[9, 8]).unwrap(),
+            vec![2, 3, 1, 0x12, 0x56, 0x34, 0x44, 0x33, 0x22, 0x11, 9, 8]
+        );
+        for seconds in [0, 0x1000000] {
+            assert!(media_header(
+                0,
+                0,
+                Some(MediaTimeshift {
+                    in_progress: true,
+                    current_seconds: Some(seconds)
+                })
+            )
+            .is_err());
+        }
+    }
 }

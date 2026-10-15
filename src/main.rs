@@ -12,6 +12,8 @@ mod relay;
 mod rtc;
 mod rtp_video;
 mod timeline;
+#[cfg(test)]
+mod tuning_bench;
 mod video;
 use anyhow::{Context, Result};
 use axum::{

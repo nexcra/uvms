@@ -211,6 +211,7 @@ async fn run(
     let mut frames = feed.subscribe();
     let mut rtcp_buffer = vec![0; 2048];
     let mut payloader = Packetizer::default();
+    let mut packet_data = Vec::new();
     let mut sequence = 0u16;
     let mut waiting_for_idr = true;
     let mut connected = peer.connection_state() == RTCPeerConnectionState::Connected;
@@ -273,14 +274,14 @@ async fn run(
                 };
                 last_frame = Instant::now();
                 if !connected || (waiting_for_idr && !frame.keyframe) { continue; }
-                let packet_data = match packet_payloads(&frame, &mut payloader) {
-                    Ok(payloads) => payloads,
+                match prepared_payload(&frame) {
+                    Ok(prepared) => payloader.payloads_into(prepared, &mut packet_data),
                     Err(_) => { waiting_for_idr = true; continue; }
-                };
+                }
                 if packet_data.is_empty() { continue; }
                 waiting_for_idr = false;
                 let last = packet_data.len() - 1;
-                for (index, payload) in packet_data.into_iter().enumerate() {
+                for (index, payload) in packet_data.drain(..).enumerate() {
                     let packet = Packet {
                         header: Header {
                             version: 2,
@@ -332,6 +333,7 @@ fn prepare_payload(frame: &Frame) -> Result<Bytes> {
     Ok(Bytes::from(normalized.into_payload()))
 }
 
+#[cfg(test)]
 fn packet_payloads(frame: &SharedFrame, payloader: &mut Packetizer) -> Result<Vec<Bytes>> {
     Ok(payloader.payloads(prepared_payload(frame)?))
 }

@@ -1,0 +1,2751 @@
+{
+  "version": "0.6.1",
+  "baseline_commit": "638d69c",
+  "scope": "Rust only; synthetic H264/AAC 640x360 15fps; recording off; 16 viewers; 20 seconds per mode; A-B-B-A; Edge and WSL on same workstation",
+  "components": [
+    {
+      "component": "audio_payload",
+      "baseline_median_us": 28607.0,
+      "optimized_median_us": 20990.0,
+      "reduction_percent": 26.62635019400846,
+      "rounds": [
+        {
+          "component": "audio_payload",
+          "reused_us": 21205,
+          "round": 0,
+          "uncached_us": 30297,
+          "viewers": 16
+        },
+        {
+          "component": "audio_payload",
+          "reused_us": 20775,
+          "round": 1,
+          "uncached_us": 26167,
+          "viewers": 16
+        },
+        {
+          "component": "audio_payload",
+          "reused_us": 21482,
+          "round": 2,
+          "uncached_us": 28207,
+          "viewers": 16
+        },
+        {
+          "component": "audio_payload",
+          "reused_us": 19668,
+          "round": 3,
+          "uncached_us": 28693,
+          "viewers": 16
+        },
+        {
+          "component": "audio_payload",
+          "reused_us": 19004,
+          "round": 4,
+          "uncached_us": 28521,
+          "viewers": 16
+        },
+        {
+          "component": "audio_payload",
+          "reused_us": 21499,
+          "round": 5,
+          "uncached_us": 28934,
+          "viewers": 16
+        }
+      ],
+      "decision": "Excluded from per-viewer RTC send path after end-to-end comparison; microbenchmark only."
+    },
+    {
+      "component": "database_connection",
+      "baseline_median_us": 210558.0,
+      "optimized_median_us": 98646.0,
+      "reduction_percent": 53.15020089476534,
+      "rounds": [
+        {
+          "component": "database_connection",
+          "queries": 1000,
+          "reused_us": 99177,
+          "round": 0,
+          "uncached_us": 210567
+        },
+        {
+          "component": "database_connection",
+          "queries": 1000,
+          "reused_us": 98619,
+          "round": 1,
+          "uncached_us": 211812
+        },
+        {
+          "component": "database_connection",
+          "queries": 1000,
+          "reused_us": 98435,
+          "round": 2,
+          "uncached_us": 204413
+        },
+        {
+          "component": "database_connection",
+          "queries": 1000,
+          "reused_us": 96012,
+          "round": 3,
+          "uncached_us": 210443
+        },
+        {
+          "component": "database_connection",
+          "queries": 1000,
+          "reused_us": 98673,
+          "round": 4,
+          "uncached_us": 210549
+        },
+        {
+          "component": "database_connection",
+          "queries": 1000,
+          "reused_us": 102119,
+          "round": 5,
+          "uncached_us": 216824
+        }
+      ]
+    },
+    {
+      "component": "mse_header",
+      "baseline_median_us": 15024.0,
+      "optimized_median_us": 2058.0,
+      "reduction_percent": 86.30191693290735,
+      "rounds": [
+        {
+          "component": "mse_header",
+          "reused_us": 2052,
+          "round": 0,
+          "uncached_us": 14368,
+          "viewers": 16
+        },
+        {
+          "component": "mse_header",
+          "reused_us": 2098,
+          "round": 1,
+          "uncached_us": 14856,
+          "viewers": 16
+        },
+        {
+          "component": "mse_header",
+          "reused_us": 1942,
+          "round": 2,
+          "uncached_us": 18699,
+          "viewers": 16
+        },
+        {
+          "component": "mse_header",
+          "reused_us": 2064,
+          "round": 3,
+          "uncached_us": 14422,
+          "viewers": 16
+        },
+        {
+          "component": "mse_header",
+          "reused_us": 2583,
+          "round": 4,
+          "uncached_us": 15192,
+          "viewers": 16
+        },
+        {
+          "component": "mse_header",
+          "reused_us": 1955,
+          "round": 5,
+          "uncached_us": 15725,
+          "viewers": 16
+        }
+      ]
+    },
+    {
+      "component": "rtp_list",
+      "baseline_median_us": 24140.0,
+      "optimized_median_us": 19461.5,
+      "reduction_percent": 19.38069594034797,
+      "rounds": [
+        {
+          "component": "rtp_list",
+          "reused_us": 20418,
+          "round": 0,
+          "uncached_us": 23419,
+          "viewers": 16
+        },
+        {
+          "component": "rtp_list",
+          "reused_us": 19432,
+          "round": 1,
+          "uncached_us": 25474,
+          "viewers": 16
+        },
+        {
+          "component": "rtp_list",
+          "reused_us": 19126,
+          "round": 2,
+          "uncached_us": 22042,
+          "viewers": 16
+        },
+        {
+          "component": "rtp_list",
+          "reused_us": 19403,
+          "round": 3,
+          "uncached_us": 24360,
+          "viewers": 16
+        },
+        {
+          "component": "rtp_list",
+          "reused_us": 22686,
+          "round": 4,
+          "uncached_us": 24221,
+          "viewers": 16
+        },
+        {
+          "component": "rtp_list",
+          "reused_us": 19491,
+          "round": 5,
+          "uncached_us": 24059,
+          "viewers": 16
+        }
+      ]
+    }
+  ],
+  "viewer_summary": [
+    {
+      "mode": "webrtc",
+      "baseline": {
+        "cpuMeanOneCorePercent": 15.466731624067982,
+        "rssPeakMiB": 62.587890625,
+        "meanFps": 14.44441265873178,
+        "dropped_frames_sum": 0
+      },
+      "optimized": {
+        "cpuMeanOneCorePercent": 16.4449803567516,
+        "rssPeakMiB": 61.283203125,
+        "meanFps": 14.281770765854679,
+        "dropped_frames_sum": 24
+      },
+      "cpu_change_percent": 6.324857484184654
+    },
+    {
+      "mode": "mse",
+      "baseline": {
+        "cpuMeanOneCorePercent": 7.014831409501961,
+        "rssPeakMiB": 52.974609375,
+        "meanFps": 14.413309584125399,
+        "dropped_frames_sum": 14
+      },
+      "optimized": {
+        "cpuMeanOneCorePercent": 6.6392211620617525,
+        "rssPeakMiB": 50.900390625,
+        "meanFps": 13.993548079630905,
+        "dropped_frames_sum": 275
+      },
+      "cpu_change_percent": -5.354515675621585
+    }
+  ],
+  "viewer_stages": [
+    {
+      "phase": "baseline-a",
+      "mode": "webrtc",
+      "viewers": 16,
+      "errors": [],
+      "passed": true,
+      "clients": [
+        {
+          "fps": 14.53829667118403,
+          "mbps": 1.239336733929556,
+          "frames": 291,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.488264505748184,
+          "mbps": 1.2393305422605843,
+          "frames": 290,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.488481657078303,
+          "mbps": 1.2393491174512565,
+          "frames": 290,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.488192123410782,
+          "mbps": 1.2393243506534786,
+          "frames": 290,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.4881197418074,
+          "mbps": 1.2393181591091613,
+          "frames": 290,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.488264505748184,
+          "mbps": 1.2393305422605843,
+          "frames": 290,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.4881197418074,
+          "mbps": 1.2393181591091613,
+          "frames": 290,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.488698814928672,
+          "mbps": 1.2393676931996733,
+          "frames": 290,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.438449240607515,
+          "mbps": 1.2393429256594726,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.438449240607515,
+          "mbps": 1.2393429256594726,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.438377106422875,
+          "mbps": 1.2393367339286334,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.488192123421573,
+          "mbps": 1.2393243506544016,
+          "frames": 290,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.438377106433624,
+          "mbps": 1.239336733929556,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.438449240607513,
+          "mbps": 1.2393429256594723,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.438449240607515,
+          "mbps": 1.2393429256594726,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.48819212342157,
+          "mbps": 1.2393243506544014,
+          "frames": 290,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "meanFps": 14.472710823990166,
+      "minFps": 14.438377106422875,
+      "totalMbps": 19.82936916977834,
+      "cpuMeanOneCorePercent": 15.411538905159185,
+      "cpuPeakOneCorePercent": 18.83882607581507,
+      "rssPeakMiB": 62.67578125,
+      "cameraInputsMax": 0,
+      "sourceInputsMax": 1,
+      "udpSocketsMax": 17,
+      "udpPorts": [
+        5353,
+        51200
+      ],
+      "logicalCpus": 16,
+      "startupMaxMs": 3468
+    },
+    {
+      "phase": "baseline-a",
+      "mode": "mse",
+      "viewers": 16,
+      "errors": [],
+      "passed": true,
+      "clients": [
+        {
+          "fps": 14.3869797833004,
+          "mbps": 1.4115917095033204,
+          "frames": 288,
+          "dropped": 1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.386692309613608,
+          "mbps": 1.411563503759023,
+          "frames": 288,
+          "dropped": 1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.38669230961361,
+          "mbps": 1.4115635037590233,
+          "frames": 288,
+          "dropped": 1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.437655804291632,
+          "mbps": 1.411662228794801,
+          "frames": 289,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.386620442981595,
+          "mbps": 1.4115564524985451,
+          "frames": 288,
+          "dropped": 1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.386620442992307,
+          "mbps": 1.4115564524995963,
+          "frames": 288,
+          "dropped": 1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.687886220692645,
+          "mbps": 1.4116199163737986,
+          "frames": 274,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.436646102355319,
+          "mbps": 1.4115635037590228,
+          "frames": 289,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.386907913796303,
+          "mbps": 1.4115846579610454,
+          "frames": 288,
+          "dropped": 1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.38697978328969,
+          "mbps": 1.4115917095022692,
+          "frames": 288,
+          "dropped": 1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.387842273285504,
+          "mbps": 1.4116763334988245,
+          "frames": 288,
+          "dropped": 1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.387482889892224,
+          "mbps": 1.411641072267758,
+          "frames": 288,
+          "dropped": 1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.387626641086522,
+          "mbps": 1.4116551765479586,
+          "frames": 288,
+          "dropped": 1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.389064311121404,
+          "mbps": 1.411796234861295,
+          "frames": 288,
+          "dropped": 1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.389208093929552,
+          "mbps": 1.4118103422433175,
+          "frames": 288,
+          "dropped": 1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.336666899776798,
+          "mbps": 1.4115564524985451,
+          "frames": 287,
+          "dropped": 2,
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "meanFps": 14.346723263876195,
+      "minFps": 13.687886220692645,
+      "totalMbps": 22.585989250328147,
+      "cpuMeanOneCorePercent": 7.370591093950118,
+      "cpuPeakOneCorePercent": 9.935123183992772,
+      "rssPeakMiB": 52.98828125,
+      "cameraInputsMax": 0,
+      "sourceInputsMax": 1,
+      "udpSocketsMax": 1,
+      "udpPorts": [
+        51200
+      ],
+      "logicalCpus": 16,
+      "startupMaxMs": 3738
+    },
+    {
+      "phase": "optimized-a",
+      "mode": "webrtc",
+      "viewers": 16,
+      "errors": [],
+      "passed": true,
+      "clients": [
+        {
+          "fps": 14.527264830542363,
+          "mbps": 1.248416228602423,
+          "frames": 291,
+          "dropped": 6,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.526974745037775,
+          "mbps": 1.2483912997905762,
+          "frames": 291,
+          "dropped": 6,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.476547992248243,
+          "mbps": 1.2483476767632715,
+          "frames": 290,
+          "dropped": 6,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.574203659518306,
+          "mbps": 1.2481607554624592,
+          "frames": 292,
+          "dropped": 6,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.227378468237623,
+          "mbps": 1.2483850677424755,
+          "frames": 285,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.226739281273002,
+          "mbps": 1.2483289821140577,
+          "frames": 285,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.226881317858478,
+          "mbps": 1.2483414451516284,
+          "frames": 285,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.227165399527397,
+          "mbps": 1.248366371972426,
+          "frames": 285,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.326647564474175,
+          "mbps": 1.2483352136022003,
+          "frames": 287,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.326719081492575,
+          "mbps": 1.2483414451516286,
+          "frames": 287,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.326719081492575,
+          "mbps": 1.2483414451516286,
+          "frames": 287,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.275089968012201,
+          "mbps": 1.248191905126113,
+          "frames": 286,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.326719081492575,
+          "mbps": 1.2483414451516286,
+          "frames": 287,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.326862117682076,
+          "mbps": 1.2483539084380584,
+          "frames": 287,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.326790599224985,
+          "mbps": 1.2483476767632715,
+          "frames": 287,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.327005156717064,
+          "mbps": 1.248366371972426,
+          "frames": 287,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "meanFps": 14.348481771551961,
+      "minFps": 14.226739281273002,
+      "totalMbps": 19.97335723895627,
+      "cpuMeanOneCorePercent": 16.88489552683838,
+      "cpuPeakOneCorePercent": 19.851686371768537,
+      "rssPeakMiB": 61.71484375,
+      "cameraInputsMax": 0,
+      "sourceInputsMax": 1,
+      "udpSocketsMax": 17,
+      "udpPorts": [
+        5353,
+        51200
+      ],
+      "logicalCpus": 16,
+      "startupMaxMs": 3243
+    },
+    {
+      "phase": "optimized-a",
+      "mode": "mse",
+      "viewers": 16,
+      "errors": [],
+      "passed": true,
+      "clients": [
+        {
+          "fps": 14.29371076726453,
+          "mbps": 1.3997453120629006,
+          "frames": 286,
+          "dropped": 2,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.293567894447499,
+          "mbps": 1.3997313209055926,
+          "frames": 286,
+          "dropped": 2,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.293639330493669,
+          "mbps": 1.3997383164487631,
+          "frames": 286,
+          "dropped": 2,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.2935678944475,
+          "mbps": 1.3997313209055928,
+          "frames": 286,
+          "dropped": 2,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.243590384327053,
+          "mbps": 1.3997313209055926,
+          "frames": 285,
+          "dropped": 3,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.243590384327053,
+          "mbps": 1.3997313209055926,
+          "frames": 285,
+          "dropped": 3,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.293567894447499,
+          "mbps": 1.3997313209055926,
+          "frames": 286,
+          "dropped": 1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.293567894447499,
+          "mbps": 1.3997313209055926,
+          "frames": 286,
+          "dropped": 2,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.243590384327053,
+          "mbps": 1.3997313209055926,
+          "frames": 285,
+          "dropped": 3,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.243875133696756,
+          "mbps": 1.399759303499912,
+          "frames": 285,
+          "dropped": 3,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.293567894447499,
+          "mbps": 1.3997313209055926,
+          "frames": 286,
+          "dropped": 1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.293496459115364,
+          "mbps": 1.3997243254323455,
+          "frames": 286,
+          "dropped": 1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.19382568582455,
+          "mbps": 1.399752307745922,
+          "frames": 284,
+          "dropped": 3,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.193754747913033,
+          "mbps": 1.3997453120629009,
+          "frames": 284,
+          "dropped": 2,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.193825685824553,
+          "mbps": 1.3997523077459222,
+          "frames": 284,
+          "dropped": 2,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.243590384327053,
+          "mbps": 1.3997313209055926,
+          "frames": 285,
+          "dropped": 3,
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "meanFps": 14.259270551229887,
+      "minFps": 14.193754747913033,
+      "totalMbps": 22.395799073148996,
+      "cpuMeanOneCorePercent": 6.274076545706438,
+      "cpuPeakOneCorePercent": 7.955123382958369,
+      "rssPeakMiB": 51.609375,
+      "cameraInputsMax": 0,
+      "sourceInputsMax": 1,
+      "udpSocketsMax": 1,
+      "udpPorts": [
+        51200
+      ],
+      "logicalCpus": 16,
+      "startupMaxMs": 3624
+    },
+    {
+      "phase": "optimized-b",
+      "mode": "webrtc",
+      "viewers": 16,
+      "errors": [],
+      "passed": true,
+      "clients": [
+        {
+          "fps": 14.186877138646755,
+          "mbps": 1.2183278467417642,
+          "frames": 284,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.18694800782857,
+          "mbps": 1.2183339327814782,
+          "frames": 284,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.136923345905041,
+          "mbps": 1.2183278467417642,
+          "frames": 283,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.186877138646752,
+          "mbps": 1.218327846741764,
+          "frames": 284,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.336738516871893,
+          "mbps": 1.218327846741764,
+          "frames": 287,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.336738516871893,
+          "mbps": 1.218327846741764,
+          "frames": 287,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.3368101346825,
+          "mbps": 1.2183339327823848,
+          "frames": 287,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.336666899776798,
+          "mbps": 1.2183217607619468,
+          "frames": 287,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.237044289694259,
+          "mbps": 1.2183461050442286,
+          "frames": 285,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.336595283407878,
+          "mbps": 1.2183156748438395,
+          "frames": 287,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.336953372428951,
+          "mbps": 1.2183461050442281,
+          "frames": 287,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.386692309613606,
+          "mbps": 1.2183278467417635,
+          "frames": 288,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.137276451193925,
+          "mbps": 1.2183582775502049,
+          "frames": 283,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.987411329803177,
+          "mbps": 1.2183582775502049,
+          "frames": 280,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.987411329803177,
+          "mbps": 1.2183582775502049,
+          "frames": 280,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.986992097343217,
+          "mbps": 1.2183217607619468,
+          "frames": 280,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "meanFps": 14.215059760157397,
+      "minFps": 13.986992097343217,
+      "totalMbps": 19.493361185121252,
+      "cpuMeanOneCorePercent": 16.005065186664822,
+      "cpuPeakOneCorePercent": 19.86770507454231,
+      "rssPeakMiB": 60.8515625,
+      "cameraInputsMax": 0,
+      "sourceInputsMax": 1,
+      "udpSocketsMax": 17,
+      "udpPorts": [
+        5353,
+        51200
+      ],
+      "logicalCpus": 16,
+      "startupMaxMs": 3044
+    },
+    {
+      "phase": "optimized-b",
+      "mode": "mse",
+      "viewers": 16,
+      "errors": [],
+      "passed": true,
+      "clients": [
+        {
+          "fps": 13.6337758067818,
+          "mbps": 1.4108554819756078,
+          "frames": 273,
+          "dropped": 16,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.733519776268476,
+          "mbps": 1.410841390331602,
+          "frames": 275,
+          "dropped": 15,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.834505353999397,
+          "mbps": 1.4109541313724423,
+          "frames": 277,
+          "dropped": 13,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.883478660396195,
+          "mbps": 1.4108554819766577,
+          "frames": 278,
+          "dropped": 12,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.833745349214674,
+          "mbps": 1.4108766199715335,
+          "frames": 277,
+          "dropped": 13,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.833399920095884,
+          "mbps": 1.410841390331602,
+          "frames": 277,
+          "dropped": 12,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.684126413368649,
+          "mbps": 1.410897758600864,
+          "frames": 274,
+          "dropped": 16,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.684058072347755,
+          "mbps": 1.4108907123203571,
+          "frames": 274,
+          "dropped": 16,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.634661006367836,
+          "mbps": 1.4109470845299037,
+          "frames": 273,
+          "dropped": 17,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.784079388300352,
+          "mbps": 1.4109048049496526,
+          "frames": 276,
+          "dropped": 14,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.584377965339858,
+          "mbps": 1.4109118513709231,
+          "frames": 272,
+          "dropped": 18,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.584513654425859,
+          "mbps": 1.4109259444225175,
+          "frames": 272,
+          "dropped": 18,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.884172043861723,
+          "mbps": 1.4109259444225175,
+          "frames": 278,
+          "dropped": 12,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.684536473788697,
+          "mbps": 1.4109400377577543,
+          "frames": 274,
+          "dropped": 16,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.784492445998252,
+          "mbps": 1.4109470845299037,
+          "frames": 276,
+          "dropped": 14,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 13.583767397955393,
+          "mbps": 1.410848436118418,
+          "frames": 272,
+          "dropped": 18,
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "meanFps": 13.727825608031925,
+      "minFps": 13.583767397955393,
+      "totalMbps": 22.574364154982256,
+      "cpuMeanOneCorePercent": 7.004365778417067,
+      "cpuPeakOneCorePercent": 7.955857108443333,
+      "rssPeakMiB": 50.19140625,
+      "cameraInputsMax": 0,
+      "sourceInputsMax": 1,
+      "udpSocketsMax": 1,
+      "udpPorts": [
+        51200
+      ],
+      "logicalCpus": 16,
+      "startupMaxMs": 2855
+    },
+    {
+      "phase": "baseline-b",
+      "mode": "webrtc",
+      "viewers": 16,
+      "errors": [],
+      "passed": true,
+      "clients": [
+        {
+          "fps": 14.428501532718398,
+          "mbps": 1.2289804191756113,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.428501532718398,
+          "mbps": 1.2289804191756113,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.428357463804293,
+          "mbps": 1.2289681477783325,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.428429497896346,
+          "mbps": 1.228974283445882,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.428357463804293,
+          "mbps": 1.2289681477783325,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.428357463804293,
+          "mbps": 1.2246330504243634,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.428213397767223,
+          "mbps": 1.2289558766261115,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.42878967917806,
+          "mbps": 1.2290049627053725,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.428933756713048,
+          "mbps": 1.2290172348369548,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.428861717575154,
+          "mbps": 1.2290110987396141,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.378719495140764,
+          "mbps": 1.2289926908170414,
+          "frames": 288,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.428645604498891,
+          "mbps": 1.2289926908170414,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.378863071291628,
+          "mbps": 1.2290049627053723,
+          "frames": 288,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.379078440872817,
+          "mbps": 1.2290233709955678,
+          "frames": 288,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.42871764147882,
+          "mbps": 1.2289988267305725,
+          "frames": 289,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.37850413631193,
+          "mbps": 1.2246391644487842,
+          "frames": 288,
+          "dropped": 0,
+          "packetsLost": 0,
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "meanFps": 14.416114493473394,
+      "minFps": 14.37850413631193,
+      "totalMbps": 19.655145347200563,
+      "cpuMeanOneCorePercent": 15.521924342976778,
+      "cpuPeakOneCorePercent": 18.881282524410782,
+      "rssPeakMiB": 62.5,
+      "cameraInputsMax": 0,
+      "sourceInputsMax": 1,
+      "udpSocketsMax": 17,
+      "udpPorts": [
+        5353,
+        51200
+      ],
+      "logicalCpus": 16,
+      "startupMaxMs": 3904
+    },
+    {
+      "phase": "baseline-b",
+      "mode": "mse",
+      "viewers": 16,
+      "errors": [],
+      "passed": true,
+      "clients": [
+        {
+          "fps": 14.289568614915373,
+          "mbps": 1.41494509008466,
+          "frames": 286,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.28949721954151,
+          "mbps": 1.4149380205546815,
+          "frames": 286,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.289568614904733,
+          "mbps": 1.4149450900836065,
+          "frames": 286,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.289283037721711,
+          "mbps": 1.4149168123907072,
+          "frames": 286,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.439459194781355,
+          "mbps": 1.4149450900836065,
+          "frames": 289,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.83901912584908,
+          "mbps": 1.4149309510963992,
+          "frames": 297,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.888758986969275,
+          "mbps": 1.4149097431443478,
+          "frames": 298,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.839093266446952,
+          "mbps": 1.4149380205546815,
+          "frames": 297,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.43909848065141,
+          "mbps": 1.4149097431443476,
+          "frames": 289,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.439387050515718,
+          "mbps": 1.4149380205546813,
+          "frames": 289,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.439387050515718,
+          "mbps": 1.4149380205546813,
+          "frames": 289,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.439098480651412,
+          "mbps": 1.4149097431443478,
+          "frames": 289,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.439098480640663,
+          "mbps": 1.4149097431432944,
+          "frames": 289,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.439242764136415,
+          "mbps": 1.414923881707706,
+          "frames": 289,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.439459194792105,
+          "mbps": 1.4149450900846599,
+          "frames": 289,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "fps": 14.439314906960243,
+          "mbps": 1.414930951095346,
+          "frames": 289,
+          "dropped": 0,
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "meanFps": 14.479895904374603,
+      "minFps": 14.289283037721711,
+      "totalMbps": 22.63887401142176,
+      "cpuMeanOneCorePercent": 6.6590717250538045,
+      "cpuPeakOneCorePercent": 7.955717520420139,
+      "rssPeakMiB": 52.9609375,
+      "cameraInputsMax": 0,
+      "sourceInputsMax": 1,
+      "udpSocketsMax": 1,
+      "udpPorts": [
+        51200
+      ],
+      "logicalCpus": 16,
+      "startupMaxMs": 4985
+    }
+  ],
+  "limitations": [
+    "Component timings are not whole-service gains or maximum viewer capacity.",
+    "Initial candidate WebRTC CPU increased; final variant restores per-viewer audio copy. No whole-service speedup versus v0.6.0 established.",
+    "MSE FPS and browser drops varied; two runs per build do not establish a statistically reliable service speedup.",
+    "GPU execution was not tested because no NVIDIA GPU is installed."
+  ],
+  "validation": {
+    "gateway_tests": 48,
+    "rtsp_tests": 22,
+    "core_tests": 9,
+    "clippy": "passed",
+    "mse_commands": {
+      "passed": true,
+      "server": "http://127.0.0.1:8091",
+      "protocol": {
+        "passed": true,
+        "initial": {
+          "first": {
+            "timestamp90k": 0,
+            "timestampMs": 0,
+            "duration90k": 6000,
+            "keyframe": true
+          }
+        },
+        "pausedAt": {
+          "timestamp90k": 114000,
+          "timestampMs": 1266,
+          "duration90k": 6000,
+          "keyframe": false
+        },
+        "pausedQuietMs": 1000,
+        "resumed": {
+          "previous": {
+            "timestamp90k": 114000,
+            "timestampMs": 1266,
+            "duration90k": 6000,
+            "keyframe": false
+          },
+          "first": {
+            "timestamp90k": 120000,
+            "timestampMs": 1333,
+            "duration90k": 6000,
+            "keyframe": true
+          }
+        },
+        "switched": {
+          "previous": {
+            "timestamp90k": 210000,
+            "timestampMs": 2333,
+            "duration90k": 6000,
+            "keyframe": true
+          },
+          "first": {
+            "timestamp90k": 216000,
+            "timestampMs": 2400,
+            "duration90k": 6000,
+            "keyframe": true
+          }
+        },
+        "final": {
+          "timestamp90k": 306000,
+          "timestampMs": 3400,
+          "duration90k": 6000,
+          "keyframe": true
+        },
+        "mediaCount": 52,
+        "initializations": 3
+      }
+    },
+    "onvif_mock": {
+      "passed": true,
+      "verified": [
+        "WS-Discovery correlation and deduplication",
+        "WS-Security SHA1 nonce digest with XML escaping and camera clock correction",
+        "HTTP SHA-256 Digest with query string",
+        "Media1, Media2, GetCapabilities fallback",
+        "fixed profile rejection and velocity/timeout validation",
+        "ContinuousMove + Stop",
+        "same-device alias serialization",
+        "Stop after HTTP failure, timeout and caller disconnect",
+        "same-origin rejection",
+        "cross-host XAddr rejection"
+      ],
+      "soap_requests": 38
+    },
+    "storage_control": {
+      "passed": true,
+      "resume_seconds": 0.813,
+      "schedule_expires_while_storage_full": true,
+      "manual_off_and_expired_schedule_preserved": true,
+      "same_process_during_limit_changes": true,
+      "limit_and_recording_intent_persisted": true,
+      "existing_recordings_preserved": 4,
+      "completed_recordings": 12,
+      "final_storage": {
+        "automatic_deletion": false,
+        "configured_limit_bytes": 8589934592,
+        "limit_bytes": 33554432,
+        "remaining_bytes": 23652534,
+        "restart_required": false,
+        "used_bytes": 9901898
+      },
+      "storage_events": [
+        {
+          "id": 6,
+          "kind": "storage",
+          "state": "limit_bytes=4194304",
+          "stream": null,
+          "time_ms": 1792061752580
+        },
+        {
+          "id": 31,
+          "kind": "storage",
+          "state": "limit_bytes=16777216",
+          "stream": null,
+          "time_ms": 1792061759458
+        },
+        {
+          "id": 43,
+          "kind": "storage",
+          "state": "limit_bytes=1048576",
+          "stream": null,
+          "time_ms": 1792061765289
+        },
+        {
+          "id": 54,
+          "kind": "storage",
+          "state": "limit_bytes=33554432",
+          "stream": null,
+          "time_ms": 1792061770563
+        }
+      ],
+      "elapsed_seconds": 30.326
+    },
+    "concurrent_reads": {
+      "passed": true,
+      "requests": 1000,
+      "concurrency": 32,
+      "elapsed_seconds": 1.1513439560076222,
+      "p50_ms": 26.081176998559386,
+      "p95_ms": 45.07295800431166,
+      "max_ms": 380.40690899651963,
+      "routes": [
+        "/api/recordings?limit=10",
+        "/api/recording/aac",
+        "/api/storage",
+        "/readyz"
+      ],
+      "scope": "Read APIs during four-camera recording and 12-player WebRTC/MSE/HLS regression; not capacity measurement"
+    },
+    "soak": {
+      "passed": true,
+      "measuredSeconds": 483.39,
+      "fixture": {
+        "run": "1792061793724541168",
+        "recording_dir": "/var/lib/uvms-soak/recordings-1792061793724541168",
+        "binary_sha256": "28c9c42c415a9b7ccf8d4e0c219bae3120e63560e4a0e07708114b04a78d1313",
+        "binary_bytes": 20657432,
+        "aliases": [
+          "aac",
+          "pcmu",
+          "pcma",
+          "opus"
+        ],
+        "http": 8099,
+        "source_proxy_port": 18576
+      },
+      "failures": [],
+      "restartHttpReadyMs": 452,
+      "finalMetrics": {
+        "time": 1792062347.8912966,
+        "pid": 121192,
+        "rss_mib": 90.0703125,
+        "logical_cpus": 16,
+        "camera_inputs": 0,
+        "source_inputs": 0,
+        "udp_ports": [
+          51900
+        ],
+        "threads": 18,
+        "fd_count": 17,
+        "cpu_percent_one_core": 0
+      },
+      "media_errors": {
+        "webrtc": 0,
+        "mse": 0,
+        "hls": 0
+      },
+      "recordings": {
+        "passed": true,
+        "integrity": "ok",
+        "files": 128,
+        "bytes": 309261323,
+        "partial_files": 0,
+        "live_api_checked": true,
+        "recording_gaps_over_2s": [
+          {
+            "stream": "aac",
+            "from_ms": 1792061860630,
+            "to_ms": 1792061896773,
+            "gap_ms": 36143,
+            "injected_outage": true
+          },
+          {
+            "stream": "aac",
+            "from_ms": 1792062079912,
+            "to_ms": 1792062083861,
+            "gap_ms": 3949,
+            "injected_outage": true
+          },
+          {
+            "stream": "pcmu",
+            "from_ms": 1792061961713,
+            "to_ms": 1792062009991,
+            "gap_ms": 48278,
+            "injected_outage": true
+          },
+          {
+            "stream": "pcmu",
+            "from_ms": 1792062079876,
+            "to_ms": 1792062083792,
+            "gap_ms": 3916,
+            "injected_outage": true
+          },
+          {
+            "stream": "pcma",
+            "from_ms": 1792062079882,
+            "to_ms": 1792062083792,
+            "gap_ms": 3910,
+            "injected_outage": true
+          },
+          {
+            "stream": "opus",
+            "from_ms": 1792062080617,
+            "to_ms": 1792062083860,
+            "gap_ms": 3243,
+            "injected_outage": true
+          }
+        ],
+        "failures": []
+      },
+      "build_note": "Soak, storage and ONVIF used the initial candidate. Final code differs only by restoring the existing RTC per-viewer audio copy; 60s copy variants and final decoded audio tests verify that send path."
+    },
+    "final_audio": [
+      {
+        "stream": "aac",
+        "mode": "webrtc",
+        "repeat": 0,
+        "hlsJsForced": false,
+        "passed": true,
+        "errors": [],
+        "httpErrors": [],
+        "hlsResponses": [],
+        "audioLabel": "\uc74c\uc131 \ud2b8\ub799 \uc5f0\uacb0\ub428 \u00b7 \uc18c\ub9ac\ub97c \ucf1c\uc11c \ub4e4\uc73c\uc138\uc694.",
+        "analysis": {
+          "maxRms": 0.061040917903163024,
+          "nonzeroWindows": 40,
+          "windows": 40,
+          "longestSilenceWindows": 0,
+          "startTime": 1.490052,
+          "sampleRate": 48000,
+          "muted": false,
+          "videoTime": 5.565749,
+          "audioTracks": 1
+        },
+        "capability": {
+          "archive": {
+            "channels": 2,
+            "codec": "Aac",
+            "sample_rate": 48000
+          },
+          "audio_correction_ms": -1057.9444444444443,
+          "conversion_errors": 0,
+          "input": {
+            "channels": 2,
+            "codec": "Aac",
+            "sample_rate": 48000
+          },
+          "state": "available",
+          "synchronization": "rtcp_sender_reports",
+          "warning": null,
+          "webrtc": {
+            "channels": 2,
+            "codec": "Opus",
+            "sample_rate": 48000
+          }
+        },
+        "mediaErrors": []
+      },
+      {
+        "stream": "pcmu",
+        "mode": "webrtc",
+        "repeat": 0,
+        "hlsJsForced": false,
+        "passed": true,
+        "errors": [],
+        "httpErrors": [],
+        "hlsResponses": [],
+        "audioLabel": "\uc74c\uc131 \ud2b8\ub799 \uc5f0\uacb0\ub428 \u00b7 \uc18c\ub9ac\ub97c \ucf1c\uc11c \ub4e4\uc73c\uc138\uc694.",
+        "analysis": {
+          "maxRms": 0.08877091436606972,
+          "nonzeroWindows": 40,
+          "windows": 40,
+          "longestSilenceWindows": 0,
+          "startTime": 1.400082,
+          "sampleRate": 48000,
+          "muted": false,
+          "videoTime": 5.469004,
+          "audioTracks": 1
+        },
+        "capability": {
+          "archive": {
+            "channels": 1,
+            "codec": "Aac",
+            "sample_rate": 8000
+          },
+          "audio_correction_ms": -1.3222222222222222,
+          "conversion_errors": 0,
+          "input": {
+            "channels": 1,
+            "codec": "Pcmu",
+            "sample_rate": 8000
+          },
+          "state": "available",
+          "synchronization": "rtcp_sender_reports",
+          "warning": null,
+          "webrtc": {
+            "channels": 1,
+            "codec": "Pcmu",
+            "sample_rate": 8000
+          }
+        },
+        "mediaErrors": []
+      },
+      {
+        "stream": "pcma",
+        "mode": "webrtc",
+        "repeat": 0,
+        "hlsJsForced": false,
+        "passed": true,
+        "errors": [],
+        "httpErrors": [],
+        "hlsResponses": [],
+        "audioLabel": "\uc74c\uc131 \ud2b8\ub799 \uc5f0\uacb0\ub428 \u00b7 \uc18c\ub9ac\ub97c \ucf1c\uc11c \ub4e4\uc73c\uc138\uc694.",
+        "analysis": {
+          "maxRms": 0.0885541475749219,
+          "nonzeroWindows": 40,
+          "windows": 40,
+          "longestSilenceWindows": 0,
+          "startTime": 1.806574,
+          "sampleRate": 48000,
+          "muted": false,
+          "videoTime": 5.87882,
+          "audioTracks": 1
+        },
+        "capability": {
+          "archive": {
+            "channels": 1,
+            "codec": "Aac",
+            "sample_rate": 8000
+          },
+          "audio_correction_ms": 45,
+          "conversion_errors": 0,
+          "input": {
+            "channels": 1,
+            "codec": "Pcma",
+            "sample_rate": 8000
+          },
+          "state": "available",
+          "synchronization": "rtcp_sender_reports",
+          "warning": null,
+          "webrtc": {
+            "channels": 1,
+            "codec": "Pcma",
+            "sample_rate": 8000
+          }
+        },
+        "mediaErrors": []
+      },
+      {
+        "stream": "opus",
+        "mode": "webrtc",
+        "repeat": 0,
+        "hlsJsForced": false,
+        "passed": true,
+        "errors": [],
+        "httpErrors": [],
+        "hlsResponses": [],
+        "audioLabel": "\uc74c\uc131 \ud2b8\ub799 \uc5f0\uacb0\ub428 \u00b7 \uc18c\ub9ac\ub97c \ucf1c\uc11c \ub4e4\uc73c\uc138\uc694.",
+        "analysis": {
+          "maxRms": 0.06261562556391616,
+          "nonzeroWindows": 40,
+          "windows": 40,
+          "longestSilenceWindows": 0,
+          "startTime": 2.168813,
+          "sampleRate": 48000,
+          "muted": false,
+          "videoTime": 6.227098,
+          "audioTracks": 1
+        },
+        "capability": {
+          "archive": {
+            "channels": 2,
+            "codec": "Aac",
+            "sample_rate": 48000
+          },
+          "audio_correction_ms": -36.24444444444445,
+          "conversion_errors": 0,
+          "input": {
+            "channels": 2,
+            "codec": "Opus",
+            "sample_rate": 48000
+          },
+          "state": "available",
+          "synchronization": "rtcp_sender_reports",
+          "warning": null,
+          "webrtc": {
+            "channels": 2,
+            "codec": "Opus",
+            "sample_rate": 48000
+          }
+        },
+        "mediaErrors": []
+      }
+    ]
+  },
+  "audio_isolation": {
+    "seconds_per_stage": 60,
+    "warmup_seconds": 5,
+    "summary": {
+      "copy": {
+        "cpuMeanOneCorePercent": 15.045737253078952,
+        "rssPeakMiB": 70.16015625,
+        "meanFps": 14.406164946878018,
+        "cpu_min": 14.80147730325756,
+        "cpu_max": 15.289997202900345
+      },
+      "shared": {
+        "cpuMeanOneCorePercent": 15.180598041516383,
+        "rssPeakMiB": 69.662109375,
+        "meanFps": 14.290676868126667,
+        "cpu_min": 15.162871003741841,
+        "cpu_max": 15.198325079290923
+      }
+    },
+    "stages": [
+      {
+        "phase": "audio-copy-a",
+        "mode": "webrtc",
+        "viewers": 16,
+        "errors": [],
+        "passed": true,
+        "clients": [
+          {
+            "fps": 14.426288495785274,
+            "mbps": 1.237902824120949,
+            "frames": 866,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.426240431787704,
+            "mbps": 1.237898699805929,
+            "frames": 866,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.426288495781693,
+            "mbps": 1.2379028241206418,
+            "frames": 866,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.409605959744963,
+            "mbps": 1.2379007619598503,
+            "frames": 865,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.409653968404907,
+            "mbps": 1.2379048862889188,
+            "frames": 865,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.409605959748538,
+            "mbps": 1.2379007619601574,
+            "frames": 865,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.392995408900285,
+            "mbps": 1.2379048862886113,
+            "frames": 864,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.442995147354965,
+            "mbps": 1.2379069484634513,
+            "frames": 867,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.409677972851265,
+            "mbps": 1.2379069484634515,
+            "frames": 865,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.392995408900285,
+            "mbps": 1.2379048862886113,
+            "frames": 864,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.409677972851265,
+            "mbps": 1.2379069484634513,
+            "frames": 865,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.409653968404907,
+            "mbps": 1.2379048862889188,
+            "frames": 865,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.39301938559584,
+            "mbps": 1.2379069484631442,
+            "frames": 864,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.393019385599416,
+            "mbps": 1.2379069484634517,
+            "frames": 864,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.393067339230175,
+            "mbps": 1.237911072833129,
+            "frames": 864,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.392947455748827,
+            "mbps": 1.2379007619601572,
+            "frames": 864,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          }
+        ],
+        "meanFps": 14.408608297293144,
+        "minFps": 14.392947455748827,
+        "totalMbps": 19.80647199423282,
+        "cpuMeanOneCorePercent": 14.80147730325756,
+        "cpuPeakOneCorePercent": 19.833484572000877,
+        "rssPeakMiB": 70.4375,
+        "cameraInputsMax": 0,
+        "sourceInputsMax": 1,
+        "udpSocketsMax": 17,
+        "udpPorts": [
+          5353,
+          51200
+        ],
+        "logicalCpus": 16,
+        "startupMaxMs": 3715
+      },
+      {
+        "phase": "audio-shared-a",
+        "mode": "webrtc",
+        "viewers": 16,
+        "errors": [],
+        "passed": true,
+        "clients": [
+          {
+            "fps": 14.310560827381739,
+            "mbps": 1.2320115417423123,
+            "frames": 859,
+            "dropped": 8,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.1440123680961,
+            "mbps": 1.2320156467094372,
+            "frames": 849,
+            "dropped": 6,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 13.744181629775362,
+            "mbps": 1.2320156467094372,
+            "frames": 825,
+            "dropped": 7,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.044007889964854,
+            "mbps": 1.2320115417420066,
+            "frames": 843,
+            "dropped": 10,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.443885421840239,
+            "mbps": 1.232015646709743,
+            "frames": 867,
+            "dropped": 1,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.410422150401494,
+            "mbps": 1.2320033318895145,
+            "frames": 865,
+            "dropped": 1,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.410398143472108,
+            "mbps": 1.2320012794432584,
+            "frames": 865,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.393858620323424,
+            "mbps": 1.2320115417423123,
+            "frames": 864,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.377223013552575,
+            "mbps": 1.2320135942224555,
+            "frames": 863,
+            "dropped": 2,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.377175109993837,
+            "mbps": 1.232009489268702,
+            "frames": 863,
+            "dropped": 2,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.310489305451943,
+            "mbps": 1.2320053843426086,
+            "frames": 859,
+            "dropped": 1,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.3603959604299,
+            "mbps": 1.2319992270041469,
+            "frames": 862,
+            "dropped": 2,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.36049165525562,
+            "mbps": 1.2320074368022362,
+            "frames": 862,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.360443807683337,
+            "mbps": 1.2320033318895145,
+            "frames": 862,
+            "dropped": 1,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.327315860674698,
+            "mbps": 1.2320197517045288,
+            "frames": 860,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 13.344284198267747,
+            "mbps": 1.2332340314231458,
+            "frames": 801,
+            "dropped": 16,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          }
+        ],
+        "meanFps": 14.232446622660312,
+        "minFps": 13.344284198267747,
+        "totalMbps": 19.713378423345358,
+        "cpuMeanOneCorePercent": 15.162871003741841,
+        "cpuPeakOneCorePercent": 16.908072546399097,
+        "rssPeakMiB": 69.125,
+        "cameraInputsMax": 0,
+        "sourceInputsMax": 1,
+        "udpSocketsMax": 17,
+        "udpPorts": [
+          5353,
+          51200
+        ],
+        "logicalCpus": 16,
+        "startupMaxMs": 3715
+      },
+      {
+        "phase": "audio-shared-b",
+        "mode": "webrtc",
+        "viewers": 16,
+        "errors": [],
+        "passed": true,
+        "clients": [
+          {
+            "fps": 14.325788418101224,
+            "mbps": 1.231313374955979,
+            "frames": 860,
+            "dropped": 5,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.309130524591803,
+            "mbps": 1.2328144510558998,
+            "frames": 859,
+            "dropped": 4,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.326719164651607,
+            "mbps": 1.231393373392556,
+            "frames": 860,
+            "dropped": 5,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.3092735420033,
+            "mbps": 1.2313256817311058,
+            "frames": 859,
+            "dropped": 4,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.360132806236976,
+            "mbps": 1.2314015789480006,
+            "frames": 862,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.426456722297138,
+            "mbps": 1.2313749112924062,
+            "frames": 866,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.42652882057368,
+            "mbps": 1.2313810652642783,
+            "frames": 866,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.425735779154161,
+            "mbps": 1.2313133749556733,
+            "frames": 866,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.32574069076438,
+            "mbps": 1.2313092727518633,
+            "frames": 860,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.325740690767939,
+            "mbps": 1.2313092727521693,
+            "frames": 860,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.325692963752664,
+            "mbps": 1.2313051705756928,
+            "frames": 860,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.342350746268657,
+            "mbps": 1.231305170575693,
+            "frames": 861,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.34247020314335,
+            "mbps": 1.2328165046683826,
+            "frames": 861,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.342398528780459,
+            "mbps": 1.2313092727521693,
+            "frames": 861,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.325764554393052,
+            "mbps": 1.2313113238505047,
+            "frames": 860,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.342589662007963,
+            "mbps": 1.2313256817311056,
+            "frames": 861,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          }
+        ],
+        "meanFps": 14.34890711359302,
+        "minFps": 14.309130524591803,
+        "totalMbps": 19.704309481253482,
+        "cpuMeanOneCorePercent": 15.198325079290923,
+        "cpuPeakOneCorePercent": 18.87111074696344,
+        "rssPeakMiB": 70.19921875,
+        "cameraInputsMax": 0,
+        "sourceInputsMax": 1,
+        "udpSocketsMax": 17,
+        "udpPorts": [
+          5353,
+          51200
+        ],
+        "logicalCpus": 16,
+        "startupMaxMs": 3765
+      },
+      {
+        "phase": "audio-copy-b",
+        "mode": "webrtc",
+        "viewers": 16,
+        "errors": [],
+        "passed": true,
+        "clients": [
+          {
+            "fps": 14.395273551853334,
+            "mbps": 1.2361533296570082,
+            "frames": 864,
+            "dropped": 8,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.41188672423503,
+            "mbps": 1.2361492105117242,
+            "frames": 865,
+            "dropped": 8,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.29530637440991,
+            "mbps": 1.2361533296570082,
+            "frames": 858,
+            "dropped": 3,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.378612355612765,
+            "mbps": 1.2361533296570082,
+            "frames": 863,
+            "dropped": 7,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.41198277226568,
+            "mbps": 1.2361574488291305,
+            "frames": 865,
+            "dropped": 7,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.361807588433292,
+            "mbps": 1.2361409723044317,
+            "frames": 862,
+            "dropped": 4,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.345242161351953,
+            "mbps": 1.2361492105120309,
+            "frames": 861,
+            "dropped": 5,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.36195115936863,
+            "mbps": 1.2361533296567015,
+            "frames": 862,
+            "dropped": 4,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.42876422466219,
+            "mbps": 1.2361677468801546,
+            "frames": 866,
+            "dropped": 5,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.412030796757513,
+            "mbps": 1.2361615680287052,
+            "frames": 865,
+            "dropped": 6,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.39544144354288,
+            "mbps": 1.2361677468801548,
+            "frames": 864,
+            "dropped": 4,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.428764224662192,
+            "mbps": 1.2361677468801548,
+            "frames": 866,
+            "dropped": 6,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.462062909971502,
+            "mbps": 1.2361656872560391,
+            "frames": 868,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.462014718595977,
+            "mbps": 1.2361615680287052,
+            "frames": 868,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.463219599329545,
+            "mbps": 1.2362645569473223,
+            "frames": 868,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          },
+          {
+            "fps": 14.44518493835388,
+            "mbps": 1.2361471509496833,
+            "frames": 867,
+            "dropped": 0,
+            "packetsLost": 0,
+            "width": 640,
+            "height": 360
+          }
+        ],
+        "meanFps": 14.403721596462892,
+        "minFps": 14.29530637440991,
+        "totalMbps": 19.778613932635963,
+        "cpuMeanOneCorePercent": 15.289997202900345,
+        "cpuPeakOneCorePercent": 20.837549441057885,
+        "rssPeakMiB": 69.8828125,
+        "cameraInputsMax": 0,
+        "sourceInputsMax": 1,
+        "udpSocketsMax": 17,
+        "udpPorts": [
+          5353,
+          51200
+        ],
+        "logicalCpus": 16,
+        "startupMaxMs": 3743
+      }
+    ],
+    "decision": "Keep existing per-viewer RTP audio copy: CPU ranges overlap and shared payload shows no clear end-to-end benefit. Keep shared ingress/passthrough AudioFrame storage.",
+    "binaries": {
+      "copy": "b32f90f3871b0e1f1763daff381344d455f9aa782706ba4e24a3eee9da38e76b",
+      "shared": "28c9c42c415a9b7ccf8d4e0c219bae3120e63560e4a0e07708114b04a78d1313"
+    }
+  },
+  "initial_viewer_comparison_note": "Initial candidate included per-viewer audio sharing, subsequently removed. These 20s numbers do not measure the final candidate.",
+  "deployment": {
+    "passed": true,
+    "health": {
+      "media_engine": "rust-native",
+      "status": "ok",
+      "version": "0.6.1"
+    },
+    "configuration_preserved": true,
+    "existing_recordings_preserved": 1421,
+    "binary_before_sha256": "5636e954b42dc9f45b391d6d8e7aca3eac67494908b12d70597e9c569b1a9822",
+    "binary_sha256": "b32f90f3871b0e1f1763daff381344d455f9aa782706ba4e24a3eee9da38e76b",
+    "binary_bytes": 20657560,
+    "backup": "/var/backups/uvms/rust-update-1792062865214280834"
+  },
+  "production_checks": {
+    "ready": {
+      "http_status": 200,
+      "data": {
+        "cameras": [
+          {
+            "id": "camera",
+            "input_active": true,
+            "recording": "recording",
+            "recording_ok": true,
+            "recording_requested": true
+          },
+          {
+            "id": "camera_copy",
+            "input_active": false,
+            "recording": "off",
+            "recording_ok": true,
+            "recording_requested": false
+          },
+          {
+            "id": "camera_live",
+            "input_active": false,
+            "recording": "off",
+            "recording_ok": true,
+            "recording_requested": false
+          },
+          {
+            "id": "camera_two",
+            "input_active": true,
+            "recording": "recording",
+            "recording_ok": true,
+            "recording_requested": true
+          }
+        ],
+        "database_readable": true,
+        "journal": {
+          "lost_events": 0,
+          "retention_events": 10000,
+          "write_failed": false
+        },
+        "sessions": {
+          "limit": 32,
+          "occupied_slots": 0
+        },
+        "status": "ok",
+        "storage": {
+          "filesystem_available_bytes": 985752760320,
+          "limit_bytes": 10737418240,
+          "unfinished_files_at_startup": 0,
+          "used_bytes": 1400192433
+        },
+        "version": "0.6.1"
+      }
+    },
+    "storage": {
+      "http_status": 200,
+      "data": {
+        "automatic_deletion": false,
+        "configured_limit_bytes": 268435456,
+        "limit_bytes": 10737418240,
+        "remaining_bytes": 9337225807,
+        "restart_required": false,
+        "used_bytes": 1400192433
+      }
+    },
+    "streams": {
+      "http_status": 200,
+      "data": [
+        {
+          "id": "camera",
+          "online": true,
+          "recording": "recording"
+        },
+        {
+          "id": "camera_copy",
+          "online": false,
+          "recording": "off"
+        },
+        {
+          "id": "camera_live",
+          "online": false,
+          "recording": "off"
+        },
+        {
+          "id": "camera_two",
+          "online": true,
+          "recording": "recording"
+        }
+      ]
+    }
+  }
+}

@@ -107,7 +107,7 @@ pub async fn serve(
                                     let clock=u64::from(audio.as_ref().unwrap().clock_rate);
                                     let Some(audio_ts)=ts.checked_mul(clock).map(|t|t/90000) else {break 'source};
                                     let mut packet=match mux.audio_fragment_with_prefix(&f.data,audio_ts,f.duration,10) {Ok(b)=>b,Err(_)=>{error(&mut ws,"Invalid audio sample; reconnect").await;break 'source}};
-                                    let Ok(header)=mse::media(0,(ts/90).min(i32::MAX as u64)as i32,None,&[]) else {break 'source};
+                                    let Ok(header)=mse::media_header(0,(ts/90).min(i32::MAX as u64)as i32,None) else {break 'source};
                                     packet[..10].copy_from_slice(&header);
                                     if send(&mut ws,packet).await.is_err(){break 'source}
                                     next_timestamp_90k=next_timestamp_90k.max(ts.saturating_add(u64::from(f.duration)*90000/clock));
@@ -121,7 +121,7 @@ pub async fn serve(
                                     let Some(ts)=f.timestamp_90k.checked_sub(base.unwrap()).and_then(|relative|session_offset_90k.checked_add(relative)) else {error(&mut ws,"Invalid media timestamp").await;break 'source};
                                     let Some(next)=ts.checked_add(u64::from(f.duration_90k)) else {error(&mut ws,"Media timestamp overflow").await;break 'source};
                                     let mut packet=match mux.fragment_with_prefix(&f.avcc,ts,f.duration_90k,f.keyframe,10){Ok(b)=>b,Err(_)=>{error(&mut ws,"H264 format changed or unsupported B-frame; reconnect with baseline camera stream").await;break 'source}};
-                                    let Ok(header)=mse::media(0,(ts/90).min(i32::MAX as u64)as i32,None,&[]) else {break 'source};
+                                    let Ok(header)=mse::media_header(0,(ts/90).min(i32::MAX as u64)as i32,None) else {break 'source};
                                     packet[..10].copy_from_slice(&header);
                                     if send(&mut ws,packet).await.is_err(){break 'source}
                                     next_timestamp_90k=next_timestamp_90k.max(next);

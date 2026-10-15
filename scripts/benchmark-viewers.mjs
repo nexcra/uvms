@@ -11,6 +11,7 @@ const seconds = Number(process.env.UVMS_BENCH_SECONDS || 20);
 const width = Number(process.env.UVMS_BENCH_WIDTH || 1920);
 const height = Number(process.env.UVMS_BENCH_HEIGHT || 1080);
 const counts = (process.env.UVMS_BENCH_COUNTS || "1,4,9,16").split(",").map(Number);
+const controlledStart = process.env.UVMS_BENCH_CONTROLLED_START === "1";
 if (!(seconds >= 5 && seconds <= 120) || counts.some(n => !Number.isInteger(n) || n < 1 || n > 24)) throw Error("Invalid bounded test parameters");
 const samples = [];
 const sampler = spawn("wsl", ["-d","Ubuntu-24.04","-u","root","--exec","env","UVMS_BENCH_SERVICE="+service,"UVMS_BENCH_SOURCE_PORT="+(process.env.UVMS_BENCH_SOURCE_PORT||554),"python3","-u","/mnt/d/workspaces/uvms/scripts/sample-service.py"], {stdio:["ignore","pipe","pipe"]});
@@ -36,10 +37,21 @@ try {
   try {
    for(let batch=0;batch<count;batch+=4) await Promise.all(Array.from({length:Math.min(4,count-batch)},async()=>{
     const page=await context.newPage();pages.push(page);page.on("pageerror",e=>stage.errors.push(e.message));
+    if(controlledStart) await page.route("**/app.js",async route=>{
+      const response=await route.fetch(),source=await response.text();
+      const automatic="loadStreams().then(ready => { if (ready && ui.stream.value) connect(); });";
+      if(!source.includes(automatic)) throw Error("Benchmark cannot identify automatic connection hook");
+      await route.fulfill({response,body:source.replace(automatic,"loadStreams();")});
+    });
     const started=Date.now();
     await page.goto(baseUrl);
-    await page.waitForFunction(()=>!document.querySelector("#disconnect").disabled);
-    if(mode==="mse") {await page.locator("#disconnect").click();await page.locator("#mode").selectOption(mode);await page.locator("#connect").click();}
+    if(controlledStart) {
+      await page.waitForFunction(()=>!document.querySelector("#connect").disabled);
+      await page.locator("#mode").selectOption(mode);await page.locator("#connect").click();
+    }else {
+      await page.waitForFunction(()=>!document.querySelector("#disconnect").disabled);
+      if(mode==="mse") {await page.locator("#disconnect").click();await page.locator("#mode").selectOption(mode);await page.locator("#connect").click();}
+    }
     await page.waitForFunction(w=>document.querySelector("#video").videoWidth===w&&Number(document.querySelector("#frames").textContent.replaceAll(",",""))>=10,width,{timeout:45000});
     page.startupMs=Date.now()-started;
    }));
@@ -64,6 +76,15 @@ try {
    stage.passed=!stage.errors.length&&stage.clients.every(c=>c.frames>0&&c.width===width&&c.height===height);
   }catch(e){stage.error=e.message;}
   finally {await context.close();console.log(JSON.stringify(stage));await mkdir(output,{recursive:true});await writeFile(output+"/viewers.json",JSON.stringify(results,null,2));}
+  if(controlledStart) {
+    const deadline=Date.now()+25000;let released=false;
+    while(Date.now()<deadline){
+      const state=await (await fetch(baseUrl+"/api/status")).json();
+      if(state.sessions.occupied_slots===0){released=true;break;}
+      await new Promise(resolve=>setTimeout(resolve,250));
+    }
+    if(!released){stage.passed=false;stage.error="Previous viewers did not release session slots";}
+  }
   if(!stage.passed)break;
  }
 }finally {

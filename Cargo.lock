@@ -2811,6 +2811,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
+ "bytes",
  "getrandom 0.2.17",
  "md5",
  "percent-encoding",
@@ -2862,7 +2863,7 @@ dependencies = [
 
 [[package]]
 name = "uvms-gateway"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "anyhow",
  "axum",

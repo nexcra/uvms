@@ -477,7 +477,7 @@ mod tests {
             }
             let correction = index.saturating_sub(400).saturating_mul(90).min(180000);
             let frame = unreal_rtsp::AudioFrame {
-                data: vec![0x21, 0x10, (index % 256) as u8],
+                data: vec![0x21, 0x10, (index % 256) as u8].into(),
                 timestamp: index * 1024,
                 duration: 1024,
                 timestamp_90k: base + raw - correction,
@@ -485,7 +485,7 @@ mod tests {
             let start = data.len();
             append_audio(&mut mux, &mut data, &frame, Some(base), 48000, 1024 * 1024).unwrap();
             let fragment = &data[start..];
-            assert_eq!(&fragment[108..], frame.data.as_slice());
+            assert_eq!(&fragment[108..], frame.data.as_ref());
             emitted.push(u64::from_be_bytes(fragment[60..68].try_into().unwrap()));
         }
         assert_eq!(emitted.len(), 4218);
@@ -501,7 +501,7 @@ mod tests {
         let mut mux = av_mux();
         let mut data = Vec::new();
         let mut frame = unreal_rtsp::AudioFrame {
-            data: vec![1, 2],
+            data: vec![1, 2].into(),
             timestamp: 0,
             duration: 1024,
             timestamp_90k: 89999,

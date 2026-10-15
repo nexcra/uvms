@@ -20,7 +20,7 @@ pub struct AudioConfig {
 }
 #[derive(Clone, Debug)]
 pub struct AudioFrame {
-    pub data: Vec<u8>,
+    pub data: bytes::Bytes,
     /// Extended sample clock, starting at zero for this audio track.
     pub timestamp: u64,
     pub duration: u32,
@@ -275,7 +275,7 @@ impl Assembler {
             .into_iter()
             .map(|(data, duration)| {
                 let frame = AudioFrame {
-                    data,
+                    data: data.into(),
                     timestamp,
                     duration,
                     timestamp_90k: anchor + timestamp * 90000 / u64::from(self.config.clock_rate),

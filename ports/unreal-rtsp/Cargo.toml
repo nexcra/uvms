@@ -6,6 +6,7 @@ license = "MIT"
 description = "Native-evidence-derived RTSP H264 ingest without external processes"
 
 [dependencies]
+bytes = "1"
 anyhow = "1"
 base64 = "0.22"
 md5 = "0.7"

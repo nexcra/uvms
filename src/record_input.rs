@@ -113,7 +113,7 @@ mod tests {
             for sample in index * 2..index * 2 + 2 {
                 audio
                     .send(Arc::new(AudioFrame {
-                        data: vec![1; 64],
+                        data: vec![1; 64].into(),
                         timestamp: sample * 1024,
                         duration: 1024,
                         timestamp_90k: sample * 1920,

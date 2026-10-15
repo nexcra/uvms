@@ -1,5 +1,8 @@
 # UVMS Rust Linux media service
 
+v0.6.1은 [전송·DB 반복 비용 감소](docs/rust-tuning-0.6.1.md)를 적용한다.
+WebRTC 패킷 목록·음성 버퍼, MSE 헤더, SQLite 연결을 개선하고 기존 프로토콜을 유지한다.
+
 v0.6.0은 [ONVIF 카메라 검색·PTZ](docs/onvif.md)를 추가한다.
 웹에서 검색한 장비를 등록된 RTSP 카메라와 연결해 프로필·지원 범위를 조회하고,
 방향·줌을 짧게 이동한 뒤 정지한다. 기존 카메라 계정을 사용하며 서비스 로그인은 없다.

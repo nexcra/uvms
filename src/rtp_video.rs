@@ -65,8 +65,21 @@ pub(crate) struct Packetizer {
 }
 
 impl Packetizer {
+    #[cfg(test)]
     pub fn payloads(&mut self, frame: &PreparedFrame) -> Vec<Bytes> {
         let mut output = Vec::with_capacity(frame.capacity);
+        self.payloads_into(frame, &mut output);
+        output
+    }
+
+    /// Caller drains the list after sending; reuse its allocation next frame.
+    /// Large frames cannot grow the retained list without bound.
+    pub fn payloads_into(&mut self, frame: &PreparedFrame, output: &mut Vec<Bytes>) {
+        output.clear();
+        if output.capacity() > 4096 && frame.capacity < 1024 {
+            *output = Vec::with_capacity(frame.capacity);
+        }
+        output.reserve(frame.capacity);
         for operation in &frame.operations {
             match operation {
                 Operation::Sps(sps) => self.sps = Some(sps.clone()),
@@ -92,7 +105,6 @@ impl Packetizer {
                 }
             }
         }
-        output
     }
 }
 
@@ -106,6 +118,30 @@ mod tests {
             out.extend(nal);
         }
         out.into()
+    }
+
+    #[test]
+    fn drained_packet_list_reuses_storage_without_repeating_parameter_sets() {
+        let frame = PreparedFrame::new(
+            annex(&[vec![0x67, 1], vec![0x68, 2], vec![0x65; 9000]]),
+            1100,
+        )
+        .unwrap();
+        let mut packetizer = Packetizer::default();
+        let mut list = Vec::new();
+        packetizer.payloads_into(&frame, &mut list);
+        let pointer = list.as_ptr();
+        let expected = list.clone();
+        for packet in list.drain(..) {
+            drop(packet);
+        }
+        packetizer.payloads_into(&frame, &mut list);
+        assert_eq!(list.as_ptr(), pointer);
+        assert_eq!(list, expected);
+        let video = PreparedFrame::new(annex(&[vec![0x61; 9000]]), 1100).unwrap();
+        packetizer.payloads_into(&video, &mut list);
+        assert_eq!(list.len() + 1, expected.len());
+        assert_eq!(list.as_ptr(), pointer);
     }
 
     #[test]

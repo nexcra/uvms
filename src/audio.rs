@@ -132,7 +132,7 @@ impl RtcAudio {
                         let timestamp = self.timestamp.unwrap();
                         self.timestamp = Some(timestamp + 960);
                         output.push(AudioFrame {
-                            data,
+                            data: data.into(),
                             timestamp,
                             duration: 960,
                             timestamp_90k: (i128::from(timestamp) * 90000 / 48000
@@ -340,7 +340,7 @@ impl ArchiveAudio {
             }
             let timestamp = position - u64::from(self.delay);
             output.push(AudioFrame {
-                data,
+                data: data.into(),
                 timestamp,
                 duration: 1024,
                 timestamp_90k: origin + timestamp * 90000 / u64::from(self.output.clock_rate),
@@ -386,13 +386,14 @@ mod tests {
         };
         let mut converter = RtcAudio::new(&config).unwrap();
         let frame = AudioFrame {
-            data: vec![0xf8, 0xff, 0xfe],
+            data: vec![0xf8, 0xff, 0xfe].into(),
             timestamp: 120,
             duration: 960,
             timestamp_90k: 225,
         };
         let output = converter.push(&frame).unwrap();
         assert_eq!(output[0].data, frame.data);
+        assert_eq!(output[0].data.as_ptr(), frame.data.as_ptr());
         assert_eq!(output[0].timestamp_90k, 225);
         assert_eq!(rtc_config(&config), config);
     }
@@ -449,7 +450,7 @@ mod tests {
                 compressed.extend(
                     converter
                         .push(&AudioFrame {
-                            data,
+                            data: data.into(),
                             timestamp: index * u64::from(count),
                             duration: count,
                             timestamp_90k: 9000 + index * 1800,

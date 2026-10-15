@@ -640,7 +640,7 @@ mod tests {
         packetizer.payload_type = 97;
         packetizer.clock_rate = 48000;
         let frame = AudioFrame {
-            data: vec![1, 2, 3, 4],
+            data: vec![1, 2, 3, 4].into(),
             timestamp: 0,
             duration: 1024,
             timestamp_90k: 90000,
